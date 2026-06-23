@@ -1,0 +1,1423 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Specifica Tecnica — Oltre Il Giardino</title>
+  <style>
+    :root {
+      --bg:      oklch(97% 0.006 145);
+      --surface: oklch(100% 0 0);
+      --fg:      oklch(18% 0.015 145);
+      --muted:   oklch(50% 0.015 145);
+      --border:  oklch(91% 0.008 145);
+      --accent:  oklch(52% 0.14 155);
+      --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
+      --font-display: 'Iowan Old Style', 'Charter', Georgia, serif;
+      --font-body:    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+      --toc-w: 260px;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── TOC sidebar ── */
+    .toc {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: var(--toc-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      z-index: 20;
+      padding: 24px 0;
+    }
+    .toc-header {
+      padding: 0 20px 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .toc-header h2 {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+    .toc-header .sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      letter-spacing: 0.03em;
+    }
+    .toc a {
+      display: block;
+      padding: 5px 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.12s, background 0.12s;
+      border-left: 2px solid transparent;
+    }
+    .toc a:hover { color: var(--fg); background: var(--accent-soft); }
+    .toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+    .toc a.h2 { padding-left: 20px; font-weight: 600; color: var(--fg); }
+    .toc a.h3 { padding-left: 32px; }
+    .toc a.h4 { padding-left: 44px; font-size: 12px; }
+
+    .toc-back {
+      display: block; padding: 12px 20px; margin: 0 0 8px;
+      font-size: 12px; color: var(--accent); text-decoration: none;
+      font-family: var(--font-mono); letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--border);
+    }
+    .toc-back:hover { text-decoration: underline; }
+
+    /* ── Main content ── */
+    .main {
+      margin-left: var(--toc-w);
+      padding: 40px 48px 80px;
+      max-width: 860px;
+    }
+
+    /* ── Markdown styles ── */
+    .md h1 { font-family: var(--font-display); font-size: clamp(28px, 4vw, 38px); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+    .md h2 { font-family: var(--font-display); font-size: 24px; font-weight: 700; margin: 40px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--fg); }
+    .md h3 { font-size: 18px; font-weight: 600; margin: 28px 0 8px; color: var(--fg); }
+    .md h4 { font-size: 15px; font-weight: 600; margin: 20px 0 6px; color: var(--fg); }
+    .md h5 { font-size: 13px; font-weight: 600; margin: 16px 0 4px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .md p { margin: 0 0 12px; }
+    .md strong { font-weight: 600; }
+    .md em { font-style: italic; color: var(--muted); }
+
+    .md a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+    .md a:hover { opacity: 0.8; }
+
+    .md ul, .md ol { padding-left: 24px; margin: 0 0 12px; }
+    .md li { margin-bottom: 4px; }
+    .md li::marker { color: var(--muted); }
+
+    .md blockquote {
+      margin: 16px 0; padding: 12px 16px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 6px 6px 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .md blockquote p { margin: 0; }
+
+    .md code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--accent-soft);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .md pre {
+      background: oklch(18% 0.015 145);
+      color: oklch(90% 0.01 145);
+      padding: 16px 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0 0 16px;
+    }
+    .md pre code { background: none; padding: 0; color: inherit; }
+
+    .md hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 32px 0;
+    }
+
+    .md table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 16px;
+      font-size: 13.5px;
+    }
+    .md th, .md td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .md th {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+      background: var(--fg-soft);
+      position: sticky;
+      top: 0;
+    }
+    .md td { vertical-align: top; }
+    .md tbody tr:hover { background: var(--accent-soft); }
+    .md td code { font-size: 12px; }
+
+    .md img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+
+    /* ── Back to top ── */
+    .back-top {
+      position: fixed; bottom: 24px; right: 24px;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--surface);
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 30;
+      box-shadow: 0 2px 8px oklch(18% 0.015 145 / 0.3);
+    }
+    .back-top.visible { opacity: 1; pointer-events: auto; }
+    .back-top:hover { transform: translateY(-2px); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .toc { display: none; }
+      .main { margin-left: 0; padding: 24px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="toc" id="toc">
+    <a href="index.html" class="toc-back">← Indice</a>
+    <div class="toc-header">
+      <h2>Specifica Tecnica</h2>
+      <div class="sub">v1.9 — 24/06/2026</div>
+    </div>
+    <div id="toc-list"></div>
+  </nav>
+
+  <article class="main md" id="content">
+    <div id="loading" style="text-align:center;padding:80px 0;color:var(--muted);font-family:var(--font-mono);font-size:13px;">Caricamento specifica…</div>
+  </article>
+
+  <button class="back-top" id="backTop" title="Torna in cima" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+  <script>
+    const md = `# Specifica Tecnica — Prototipo Gestione Noleggi Oltre Il Giardino SRL
+
+> **Versione:** 1.9
+> **Data:** 24/06/2026
+> **Stato:** Prototipo completato
+> **Prossimo passo:** Validazione prototipo → Sviluppo Fase 0
+
+---
+
+## 1. Introduzione
+
+### 1.1 Contesto
+
+Oltre Il Giardino SRL opera nel settore del noleggio di suppellettili, arredi, luci e allestimenti per eventi privati e aziendali (matrimoni, cerimonie, fiere, convegni). L'azienda dispone di un catalogo prodotti organizzato in categorie merceologiche e di un gestionale esistente che gestisce la contabilità, i movimenti fiscali e la valorizzazione di magazzino.
+
+Si rende necessario un applicativo web dedicato che gestisca il flusso operativo: preventivazione, ordini, movimentazione fisica della merce (DDT di carico/scarico), tracciamento stato articoli e disponibilità.
+
+### 1.2 Scopo del documento
+
+Il presente documento costituisce la specifica tecnica per la realizzazione di un **prototipo funzionante** dell'applicativo. Sarà utilizzato come input per:
+
+- La fase di **design** (UI/UX, wireframe)
+- La successiva **specifica HTML**
+- Lo **sviluppo** del frontend e backend
+
+### 1.3 Glossario
+
+| Termine | Descrizione |
+|---|---|
+| **Gestionale** | Sistema ERP/contabile esistente che gestisce fiscalità, contabilità e valorizzazione magazzino |
+| **DDT Uscita** | Documento di Trasporto per carico merce in uscita verso evento |
+| **DDT Ingresso** | Documento di Trasporto per scarico merce in rientro da evento |
+| **Preventivo** | Ipotesi di noleggio con impegno non vincolante per il periodo indicato |
+| **Ordine** | Trasformazione del preventivo in impegno definitivo |
+| **Articolo** | Prodotto a catalogo (es. "Sedia Chiavari bianca") |
+| **Disponibilità** | Quantità di un articolo non impegnata in un dato intervallo di date |
+
+---
+
+## 2. Architettura Generale
+
+### 2.1 Stack Tecnologico
+
+| Componente | Tecnologia |
+|---|---|
+| **Frontend** | React 18+ con TypeScript |
+| **State management** | React Query + Context API |
+| **UI Library** | Material UI (MUI) o Ant Design |
+| **Backend** | Node.js + Express + TypeScript |
+| **ORM** | Prisma (TypeScript-first ORM) |
+| **Database** | PostgreSQL 15+ |
+| **Autenticazione** | JWT (access + refresh token) + Sessioni web |
+| **Documenti** | PDF generation (PDFMake o Puppeteer) |
+| **Container** | Docker + docker-compose (sviluppo) |
+| **Deploy** | VPS tradizionale (Node + PM2, Nginx reverse proxy) |
+
+### 2.2 Schema Architetturale
+
+\`\`\`
+┌─────────────────────────────────────────────────────────────┐
+│                     CLIENT (Browser)                         │
+│  React SPA ─── React Query ─── Auth Context (JWT + Session) │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ HTTPS / REST JSON
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   REVERSE PROXY (Nginx)                      │
+│         HTTPS termination, static files, load balancing      │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   BACKEND (Node.js + Express)                │
+│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────┐  │
+│  │ Auth    │ │ Anagraf. │ │ Ordini   │ │ Integrazione   │  │
+│  │ Module  │ │ Module   │ │ Module   │ │ Gestionale     │  │
+│  └─────────┘ └──────────┘ └──────────┘ └────────────────┘  │
+│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────┐  │
+│  │ Catalogo│ │ DDT/     │ │ Calend.  │ │ Dashboard /    │  │
+│  │ Prodotti│ │ Movim.   │ │ Disp.    │ │ Report         │  │
+│  └─────────┘ └──────────┘ └──────────┘ └────────────────┘  │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ Prisma ORM
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   PostgreSQL Database                        │
+│    anagrafiche, prodotti, preventivi, ordini, movimenti     │
+└─────────────────────────────────────────────────────────────┘
+\`\`\`
+
+### 2.3 Repository
+
+- **frontend/**: \`https://github.com/.../oltreilgiardino-frontend\`
+- **backend/**: \`https://github.com/.../oltreilgiardino-backend\`
+
+### 2.4 Multi-tenancy
+
+Architettura single-tenant con schema preparato per multi-tenancy futura:
+- Tabella \`tenant\` con identificativo univoco
+- Ogni tabella dati referenziata al \`tenant_id\`
+- Middleware che filtra per tenant
+- Attivabile in futuro senza rewriting
+
+---
+
+## 3. Modello Dati
+
+### 3.1 Diagramma Entità-Relazioni (descrizione testuale)
+
+\`\`\`
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              TENANT                                     │
+│  id, nome, partita_iva, indirizzo, referente, email, telefono, attivo   │
+└──────────┬──────────────────────────────────────────────────────────────┘
+           │ 1
+           │ *
+┌──────────▼──────────────────┐       ┌───────────────────────────────────┐
+│           USER              │       │           CATEGORIA               │
+│  id, tenant_id, email,      │       │  id, tenant_id, nome, descrizione,│
+│  password_hash, nome,       │       │  ordinamento, attivo              │
+│  cognome, ruolo, attivo     │       └──────────┬────────────────────────┘
+└─────────────────────────────┘                  │ 1
+                                                  │ *
+                                     ┌────────────▼──────────────────────┐
+                                     │           PRODOTTO                │
+                                     │ id, tenant_id, categoria_id,      │
+                                     │ nome, codice_articolo,            │
+                                     │ descrizione, quantita_totale,     │
+                                     │ prezzo_giorno, prezzo_forfettario,│
+                                     │ prezzo_3gg, prezzo_settimana,     │
+                                     │ unita_misura, immagine_url,       │
+                                     │ attivo, note                      │
+                                     └────────────┬──────────────────────┘
+                                                   │ 1
+                                                   │ *
+                          ┌────────────────────────┴──────────────────────┐
+                          │               CLIENTE                        │
+                          │ id, tenant_id, codice_gestionale,             │
+                          │ ragione_sociale, partita_iva, cod_fiscale,    │
+                          │ indirizzo_sede, città, cap, provincia,        │
+                          │ paese, email, telefono, referente,            │
+                          │ note, attivo, data_sincronizzazione           │
+                          └────────────────────┬─────────────────────────┘
+                                                │ 1
+                                                │ *
+                    ┌───────────────────────────┴──────────────────────┐
+                    │               PREVENTIVO                        │
+                    │ id, tenant_id, cliente_id, numero, anno,        │
+                    │ data_emissione, data_inizio, data_fine,         │
+                    │ data_scadenza, stato, subtotale, sconto_pct,    │
+                    │ sconto_importo, totale, note, note_interne,     │
+                    │ created_by, created_at, updated_at              │
+                    └───────────────────────┬─────────────────────────┘
+                                            │ 1
+                                            │ *
+                    ┌───────────────────────┴─────────────────────────┐
+                    │         PREVENTIVO_RIGA                        │
+                    │ id, preventivo_id, prodotto_id, quantita,      │
+                    │ prezzo_unitario, tipo_prezzo (giorno/forfait/  │
+                    │ durata), sconto_pct, sconto_importo,           │
+                    │ totale_riga, note                              │
+                    └───────────────────────┬─────────────────────────┘
+                                            │
+                                            │ (trasformazione)
+                                            ▼
+                    ┌────────────────────────────────────────────────┐
+                    │               ORDINE                           │
+                    │ id, tenant_id, preventivo_id?, cliente_id,     │
+                    │ numero, anno, data_emissione,                  │
+                    │ data_inizio_noleggio, data_fine_noleggio,      │
+                    │ data_allestimento, data_smontaggio,            │
+                    │ indirizzo_evento, citta_evento,               │
+                    │ referente_nome, referente_telefono,            │
+                    │ orario_allestimento, orario_smontaggio,        │
+                    │ stato, subtotale, sconto_pct, sconto_importo,  │
+                    │ totale, note, note_logistiche,                 │
+                    │ created_by, created_at, updated_at             │
+                    └───────────────────────┬─────────────────────────┘
+                                            │ 1
+                                            │ *
+                    ┌───────────────────────┴─────────────────────────┐
+                    │            ORDINE_RIGA                          │
+                    │ id, ordine_id, prodotto_id, quantita,          │
+                    │ prezzo_unitario, tipo_prezzo, sconto_pct,      │
+                    │ sconto_importo, totale_riga, note              │
+                    └───────────────────────┬─────────────────────────┘
+                                            │ 1
+                                            │ *
+                     ┌──────────────────────┴──────────────────────┐
+                     │      MOVIMENTO (DDT interno)               │
+                     │ id, tenant_id, ordine_id, tipo (uscita/     │
+                     │ ingresso), numero, anno,                    │
+                     │ data_movimento, stato (bozza/confermato),   │
+                     │ firma_consegna?, firma_ritiro?,             │
+                     │ created_by, created_at, updated_at          │
+                     └───────────────────────┬─────────────────────┘
+                                             │ 1
+                                             │ *
+                    ┌────────────────────────┴─────────────────────┐
+                    │         MOVIMENTO_RIGA                       │
+                    │ id, movimento_id, ordine_riga_id,            │
+                    │ prodotto_id, quantita,                       │
+                    │ stato_destinazione (in_noleggio/reso/        │
+                    │ danneggiato), quantita_danneggiata, note     │
+                    └─────────────────────────────────────────────┘
+\`\`\`
+
+### 3.2 Dettaglio Tabelle Principali
+
+#### 3.2.1 tenant
+- \`id\` UUID PK
+- \`nome\` VARCHAR(255)
+- \`partita_iva\` VARCHAR(20)
+- \`indirizzo\` TEXT
+- \`referente\` VARCHAR(255)
+- \`email\` VARCHAR(255)
+- \`telefono\` VARCHAR(50)
+- \`attivo\` BOOLEAN DEFAULT true
+- \`created_at\`, \`updated_at\`
+
+#### 3.2.2 user
+- \`id\` UUID PK
+- \`tenant_id\` UUID FK → tenant
+- \`email\` VARCHAR(255) UNIQUE
+- \`password_hash\` VARCHAR(255)
+- \`nome\` VARCHAR(100)
+- \`cognome\` VARCHAR(100)
+- \`ruolo\` ENUM('superadmin', 'admin', 'operatore', 'magazziniere')
+- \`refresh_token\` TEXT (per sessioni JWT)
+- \`attivo\` BOOLEAN DEFAULT true
+- \`created_at\`, \`updated_at\`
+
+#### 3.2.3 categoria
+- \`id\` UUID PK
+- \`tenant_id\` UUID FK → tenant
+- \`nome\` VARCHAR(255)
+- \`descrizione\` TEXT
+- \`ordinamento\` INTEGER
+- \`attivo\` BOOLEAN DEFAULT true
+- \`created_at\`, \`updated_at\`
+
+#### 3.2.4 prodotto
+- \`id\` UUID PK
+- \`tenant_id\` UUID FK → tenant
+- \`categoria_id\` UUID FK → categoria
+- \`codice_articolo\` VARCHAR(50) (codice interno / SKU)
+- \`nome\` VARCHAR(255)
+- \`descrizione\` TEXT
+- \`quantita_totale\` INTEGER (giacenza totale di magazzino)
+- \`prezzo_giorno\` DECIMAL(10,2) (prezzo noleggio per 1 giorno)
+- \`prezzo_forfettario\` DECIMAL(10,2) (prezzo forfettario per periodo)
+- \`prezzo_3gg\` DECIMAL(10,2) (prezzo per 3 giorni)
+- \`prezzo_settimana\` DECIMAL(10,2) (prezzo settimanale)
+- \`unita_misura\` VARCHAR(20) DEFAULT 'pezzi'
+- \`immagine_url\` TEXT
+- \`attivo\` BOOLEAN DEFAULT true
+- \`note\` TEXT
+- \`created_at\`, \`updated_at\`
+
+#### 3.2.5 cliente
+- \`id\` UUID PK
+- \`tenant_id\` UUID FK → tenant
+- \`codice_gestionale\` VARCHAR(50) (riferimento ID nel gestionale)
+- \`ragione_sociale\` VARCHAR(255)
+- \`partita_iva\` VARCHAR(20)
+- \`cod_fiscale\` VARCHAR(20)
+- \`indirizzo_sede\` TEXT
+- \`citta\` VARCHAR(100)
+- \`cap\` VARCHAR(10)
+- \`provincia\` VARCHAR(10)
+- \`paese\` VARCHAR(100) DEFAULT 'Italia'
+- \`email\` VARCHAR(255)
+- \`telefono\` VARCHAR(50)
+- \`referente\` VARCHAR(255)
+- \`note\` TEXT
+- \`attivo\` BOOLEAN DEFAULT true
+- \`ultima_sincronizzazione\` TIMESTAMP
+- \`created_at\`, \`updated_at\`
+
+#### 3.2.6 preventivo
+- \`id\` UUID PK
+- \`tenant_id\` UUID FK → tenant
+- \`cliente_id\` UUID FK → cliente
+- \`numero\` INTEGER (progressivo annuale per tenant)
+- \`anno\` INTEGER
+- \`data_emissione\` DATE
+- \`data_inizio\` DATE (inizio noleggio previsto)
+- \`data_fine\` DATE (fine noleggio previsto)
+- \`data_scadenza\` DATE (scadenza validità preventivo)
+- \`stato\` ENUM('bozza', 'inviato', 'accettato', 'scaduto', 'trasformato', 'archiviato')
+- \`subtotale\` DECIMAL(10,2)
+- \`sconto_pct\` DECIMAL(5,2) DEFAULT 0
+- \`sconto_importo\` DECIMAL(10,2) DEFAULT 0
+- \`totale\` DECIMAL(10,2)
+- \`note\` TEXT (visibili al cliente)
+- \`note_interne\` TEXT
+- \`created_by\` UUID FK → user
+- \`created_at\`, \`updated_at\`
+
+#### 3.2.7 preventivo_riga
+- \`id\` UUID PK
+- \`preventivo_id\` UUID FK → preventivo
+- \`prodotto_id\` UUID FK → prodotto
+- \`quantita\` INTEGER
+- \`prezzo_unitario\` DECIMAL(10,2)
+- \`tipo_prezzo\` ENUM('giorno', 'forfait', 'durata')
+- \`sconto_pct\` DECIMAL(5,2) DEFAULT 0
+- \`sconto_importo\` DECIMAL(10,2) DEFAULT 0
+- \`totale_riga\` DECIMAL(10,2)
+- \`note\` TEXT
+- \`created_at\`
+
+#### 3.2.8 ordine
+- \`id\` UUID PK
+- \`tenant_id\` UUID FK → tenant
+- \`preventivo_id\` UUID FK → preventivo (NULLABLE se ordine diretto)
+- \`cliente_id\` UUID FK → cliente
+- \`numero\` INTEGER (progressivo annuale per tenant)
+- \`anno\` INTEGER
+- \`data_emissione\` DATE
+- \`data_inizio_noleggio\` DATE
+- \`data_fine_noleggio\` DATE
+- \`data_allestimento\` DATE
+- \`data_smontaggio\` DATE
+- \`orario_allestimento\` TIME
+- \`orario_smontaggio\` TIME
+- \`indirizzo_evento\` TEXT
+- \`citta_evento\` VARCHAR(100)
+- \`referente_nome\` VARCHAR(255)
+- \`referente_telefono\` VARCHAR(50)
+- \`stato\` ENUM('confermato', 'in_allestimento', 'in_corso', 'in_rientro', 'completato', 'annullato')
+- \`subtotale\` DECIMAL(10,2)
+- \`sconto_pct\` DECIMAL(5,2) DEFAULT 0
+- \`sconto_importo\` DECIMAL(10,2) DEFAULT 0
+- \`totale\` DECIMAL(10,2)
+- \`note\` TEXT
+- \`note_logistiche\` TEXT
+- \`created_by\` UUID FK → user
+- \`created_at\`, \`updated_at\`
+
+#### 3.2.9 ordine_riga
+- \`id\` UUID PK
+- \`ordine_id\` UUID FK → ordine
+- \`prodotto_id\` UUID FK → prodotto
+- \`quantita\` INTEGER
+- \`prezzo_unitario\` DECIMAL(10,2)
+- \`tipo_prezzo\` ENUM('giorno', 'forfait', 'durata')
+- \`sconto_pct\` DECIMAL(5,2) DEFAULT 0
+- \`sconto_importo\` DECIMAL(10,2) DEFAULT 0
+- \`totale_riga\` DECIMAL(10,2)
+- \`note\` TEXT
+- \`created_at\`
+
+#### 3.2.10 movimento (DDT interno)
+- \`id\` UUID PK
+- \`tenant_id\` UUID FK → tenant
+- \`ordine_id\` UUID FK → ordine
+- \`tipo\` ENUM('uscita', 'ingresso')
+- \`numero\` INTEGER (progressivo annuale per tenant, indipendente per tipo)
+- \`anno\` INTEGER
+- \`data_movimento\` TIMESTAMP
+- \`stato\` ENUM('bozza', 'confermato')
+- \`firma_consegna\` TEXT (base64 PNG, opzionale)
+- \`firma_ritiro\` TEXT (base64 PNG, opzionale)
+- \`created_by\` UUID FK → user
+- \`created_at\`, \`updated_at\`
+
+#### 3.2.11 movimento_riga
+- \`id\` UUID PK
+- \`movimento_id\` UUID FK → movimento
+- \`ordine_riga_id\` UUID FK → ordine_riga
+- \`prodotto_id\` UUID FK → prodotto
+- \`quantita\` INTEGER
+- \`stato_destinazione\` ENUM('in_noleggio', 'reso', 'danneggiato')
+- \`quantita_danneggiata\` INTEGER DEFAULT 0
+- \`note\` TEXT
+- \`created_at\`
+
+### 3.3 Indici Consigliati
+
+- \`prodotto(codice_articolo)\` UNIQUE per tenant
+- \`preventivo(tenant_id, anno, numero)\` UNIQUE
+- \`ordine(tenant_id, anno, numero)\` UNIQUE
+- \`movimento(tenant_id, anno, numero, tipo)\` UNIQUE
+- \`cliente(tenant_id, partita_iva)\` UNIQUE
+- \`user(tenant_id, email)\` UNIQUE
+- Indici su tutte le FK per JOIN performance
+- Indice su \`prodotto(tenant_id, categoria_id)\`
+- Indice su \`preventivo(cliente_id, stato)\`
+- Indice su \`ordine(cliente_id, stato)\`
+
+---
+
+## 4. API Design
+
+### 4.1 Convenzioni
+
+- **Base URL**: \`/api/v1\`
+- **Autenticazione**: \`Authorization: Bearer <jwt>\` o cookie di sessione
+- **Formato risposta**: JSON
+- **Paginazione**: \`?page=1&limit=20\` — risposta con \`{ data: [...], meta: { total, page, limit, totalPages } }\`
+- **Filtri**: \`?campo=valore\` o \`?q=testo\` per ricerca full-text
+- **Ordinamento**: \`?sort=campo&order=asc|desc\`
+- **Errori**: \`{ error: { code, message, details } }\`
+- **Codici HTTP**: 200 (OK), 201 (Creato), 400 (Bad Request), 401 (Unauthorized), 403 (Forbidden), 404 (Not Found), 409 (Conflict), 422 (Validation Error), 500 (Server Error)
+
+### 4.2 Endpoint Principali
+
+#### 4.2.1 Auth
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| POST | \`/auth/login\` | Login con email/password, restituisce JWT + imposta cookie |
+| POST | \`/auth/logout\` | Logout, invalida refresh token |
+| POST | \`/auth/refresh\` | Rinnova JWT con refresh token |
+| GET | \`/auth/me\` | Profilo utente corrente |
+| PUT | \`/auth/password\` | Cambio password |
+
+#### 4.2.2 Anagrafiche Clienti
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| GET | \`/clienti\` | Lista clienti (paginata, filtrabile) |
+| GET | \`/clienti/:id\` | Dettaglio cliente |
+| POST | \`/clienti\` | Crea nuovo cliente |
+| PUT | \`/clienti/:id\` | Aggiorna cliente |
+| DELETE | \`/clienti/:id\` | Disattiva cliente (logico) |
+| GET | \`/clienti/:id/ordini\` | Storico ordini del cliente |
+| GET | \`/clienti/:id/preventivi\` | Storico preventivi del cliente |
+
+#### 4.2.3 Catalogo Prodotti
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| GET | \`/categorie\` | Lista categorie |
+| POST | \`/categorie\` | Crea categoria |
+| PUT | \`/categorie/:id\` | Aggiorna categoria |
+| DELETE | \`/categorie/:id\` | Disattiva categoria |
+| GET | \`/prodotti\` | Lista prodotti (filtrabile per categoria, testo) |
+| GET | \`/prodotti/:id\` | Dettaglio prodotto |
+| POST | \`/prodotti\` | Crea prodotto |
+| PUT | \`/prodotti/:id\` | Aggiorna prodotto |
+| DELETE | \`/prodotti/:id\` | Disattiva prodotto (logico) |
+| GET | \`/prodotti/:id/disponibilita\` | Disponibilità per intervallo date |
+
+#### 4.2.4 Preventivi
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| GET | \`/preventivi\` | Lista preventivi (filtrabile per stato, cliente, data) |
+| GET | \`/preventivi/:id\` | Dettaglio preventivo con righe |
+| GET | \`/preventivi/:id/pdf\` | Scarica PDF preventivo |
+| POST | \`/preventivi\` | Crea preventivo (con righe) |
+| PUT | \`/preventivi/:id\` | Aggiorna preventivo |
+| PUT | \`/preventivi/:id/stato\` | Cambia stato (invia, archivia, ecc.) |
+| POST | \`/preventivi/:id/trasforma\` | Trasforma preventivo in ordine |
+| DELETE | \`/preventivi/:id\` | Elimina preventivo (solo se bozza) |
+
+#### 4.2.5 Ordini
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| GET | \`/ordini\` | Lista ordini (filtrabile per stato, cliente, data) |
+| GET | \`/ordini/:id\` | Dettaglio ordine con righe |
+| GET | \`/ordini/:id/pdf\` | Scarica PDF ordine / conferma |
+| POST | \`/ordini\` | Crea ordine diretto (senza preventivo) |
+| PUT | \`/ordini/:id\` | Aggiorna ordine |
+| PUT | \`/ordini/:id/stato\` | Cambia stato ordine |
+| POST | \`/ordini/:id/ddt\` | Crea DDT (uscita o ingresso) per questo ordine |
+| DELETE | \`/ordini/:id\` | Annulla ordine |
+
+#### 4.2.6 Movimenti (DDT)
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| GET | \`/movimenti\` | Lista movimenti (filtrabile per tipo, ordine, data) |
+| GET | \`/movimenti/:id\` | Dettaglio movimento con righe |
+| POST | \`/movimenti\` | Crea movimento (con righe) |
+| PUT | \`/movimenti/:id\` | Aggiorna movimento (solo bozza) |
+| PUT | \`/movimenti/:id/conferma\` | Conferma movimento (cambio stato articoli) |
+| GET | \`/movimenti/:id/pdf\` | Scarica PDF DDT |
+
+#### 4.2.7 Calendario Eventi
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| GET | \`/disponibilita\` | Matrice disponibilità per intervallo date e prodotti |
+| GET | \`/disponibilita/:prodottoId\` | Disponibilità di un singolo prodotto per intervallo |
+| GET | \`/disponibilita/critica\` | Prodotti con disponibilità sotto soglia (es. < 20%) |
+
+#### 4.2.8 Dashboard
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| GET | \`/dashboard/riepilogo\` | KPI: ordini attivi, preventivi in scadenza, impegni prossimi |
+| GET | \`/dashboard/preventivi-scaduti\` | Preventivi scaduti/ in scadenza (per solleciti) |
+| GET | \`/dashboard/impegni-prossimi\` | Ordini in partenza nei prossimi N giorni |
+| GET | \`/dashboard/disponibilita-critica\` | Prodotti con disponibilità sotto soglia |
+
+#### 4.2.9 Integrazione Gestionale (futura)
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| POST | \`/integrazione/sync-clienti\` | Sincronizza clienti verso gestionale |
+| POST | \`/integrazione/sync-ordini\` | Invia ordini confermati al gestionale |
+| POST | \`/integrazione/sync-movimenti\` | Invia movimenti di magazzino al gestionale |
+| GET | \`/integrazione/log\` | Log delle sincronizzazioni |
+
+---
+
+## 5. Flussi Funzionali Dettagliati
+
+### 5.1 Flusso Preventivo → Ordine → DDT → Reso
+
+\`\`\`
+1. CREAZIONE PREVENTIVO
+   ─────────────────────
+   Operatore seleziona cliente (o lo crea)
+   → Aggiunge prodotti con quantità e periodo
+   → Sistema calcola prezzi in base al tipo selezionato
+     (giorno / forfait / durata)
+   → Applica sconti di riga se necessario
+   → Genera totale
+   → Salva come BOZZA
+   → Può inviare al cliente (cambia stato a INVIATO)
+   → Data scadenza configurabile
+
+2. TRASFORMAZIONE IN ORDINE
+   ─────────────────────────
+   Cliente accetta il preventivo
+   → Operatore clicca "Trasforma in Ordine"
+   → Sistema copia i dati in un nuovo ORDINE
+   → Possibile applicare sconti aggiuntivi (%, importo, override)
+   → Ordine creato in stato CONFERMATO
+   → Preventivo passa a TRASFORMATO
+
+3. DDT DI USCITA
+   ──────────────
+   In prossimità dell'evento:
+   → Operatore/magazziniere crea MOVIMENTO tipo USCITA
+   → Seleziona le righe dell'ordine e quantità caricate
+   → Conferma il movimento
+   → Stato articoli: Disponibile → In carico (transitorio)
+   → Opzionale: firma digitale al momento del carico
+
+4. CONSEGNA / ALLESTIMENTO
+   ────────────────────────
+   Merce trasportata all'evento e allestita
+   → Ordine passa a IN_CORSO
+   → Stato articoli: In carico → In noleggio
+
+5. DDT DI INGRESSO
+   ────────────────
+   Termine evento / smontaggio:
+   → Operatore/magazziniere crea MOVIMENTO tipo INGRESSO
+   → Per ogni riga, indica quantità RESE e quantità DANNEGGIATE
+   → Conferma il movimento
+   → Stato articoli: In noleggio → Reso (o Danneggiato per alcune qty)
+   → Ordine passa a COMPLETATO (se tutto reso)
+
+6. RIALLINEAMENTO MAGAZZINO
+   ─────────────────────────
+   Periodicamente (o real-time via API):
+   → I movimenti confermati vengono comunicati al gestionale
+   → Il gestionale aggiorna la valorizzazione di magazzino
+\`\`\`
+
+### 5.2 Gestione Prezzi
+
+Il sistema supporta tre modalità di prezzo, selezionabili per ogni riga:
+
+| Tipo | Calcolo |
+|---|---|
+| **giorno** | \`quantità × prezzo_giorno × (data_fine - data_inizio)\` |
+| **forfait** | \`quantità × prezzo_forfettario\` (indipendentemente dalla durata) |
+| **durata** | Prezzo in base alla durata: 1gg = prezzo_giorno, 2-3gg = prezzo_3gg, 4+gg = prezzo_settimana |
+
+In fase di trasformazione in ordine è possibile:
+- Sconto percentuale sulla riga o sul totale
+- Sconto importo fisso sulla riga o sul totale
+- Override completo del prezzo unitario
+
+### 5.3 Gestione Stati Articolo
+
+\`\`\`
+Disponibile
+    │
+    ▼
+In carico (transito verso evento)
+    │
+    ▼
+In noleggio (presso cliente)
+    │
+    ├──▶ Reso (rientrato in magazzino)
+    │
+    └──▶ Danneggiato (con quantitativo specifico)
+          └──▶ (da valutare: riparazione / sostituzione / scarico)
+\`\`\`
+
+Il sistema tiene traccia delle quantità danneggiate singolarmente (es. su 100 sedie, 3 danneggiate). Le quantità danneggiate sono dettagliate per movimento di ingresso.
+
+### 5.4 Calendario Eventi
+
+**Logica di visualizzazione:**
+- Vista Gantt 2 mesi (Giugno–Luglio 2026) con eventi come barre colore
+- Ogni evento mostra: numero ordine, cliente, date, qtà totale, stato
+- Barre colore per stato: bozza (grigio), inviato (arancio), accettato/blu, confermato (blu), allestimento (verde), in corso (accent), completato (verde chiaro)
+- Drag-to-pan sulla timeline, marker "OGGI"
+
+**Modalità di visualizzazione:**
+- Vista Gantt multi-articolo con timeline condivisa
+- Per ogni prodotto, barre colore che mostrano gli impegni nel tempo
+- Filtro per categoria, stato, ricerca testo
+- Drag-to-pan sulla timeline, navigazione rapida
+- Legenda interattiva con click per scrollare a un impegno specifico
+
+---
+
+## 6. Autenticazione e Autorizzazione
+
+### 6.1 Ruoli Utente (configurabili)
+
+| Ruolo | Permessi |
+|---|---|
+| **superadmin** | Accesso totale, configurazione sistema, gestione utenti, log, multi-tenant |
+| **admin** | Tutto tranne gestione tenant. Crea/modifica utenti, catalogo, prezzi |
+| **operatore** | Gestione clienti, preventivi, ordini, DDT. NON può modificare prezzi catalogo, utenti, impostazioni |
+| **magazziniere** | Solo DDT (creazione/conferma), consultazione ordini, dashboard |
+
+I ruoli e i permessi sono **configurabili** tramite tabella \`permessi\` e associazione \`ruolo_permesso\`, permettendo di creare ruoli custom in futuro.
+
+### 6.2 Modalità Autenticazione
+
+**Dual-mode (JWT + Sessioni):**
+
+- **API**: Autenticazione via JWT (Authorization header). JWT breve durata (15 min) + refresh token (7 giorni) in httpOnly cookie.
+- **Web app**: Autenticazione via sessioni (cookie httpOnly). Il backend gestisce la sessione lato server.
+- Le API sono accessibili con entrambe le modalità.
+- Logout invalida sia JWT refresh token che sessione.
+
+---
+
+## 7. Integrazione con Gestionale (progettazione futura)
+
+### 7.1 Principi Generali
+
+- Le API di integrazione saranno definite dal **fornitore del gestionale**
+- L'applicativo gestisce in autonomia il proprio DB e il CRUD completo
+- Periodicamente (o su evento) avviene la **sincronizzazione bidirezionale**
+- La sincronizzazione copre:
+  - **Anagrafiche** (clienti): create/modificate nell'app e inviate al gestionale per ciclo attivo
+  - **Prodotti**: allineamento codici articolo e giacenze
+  - **Ordini**: invio dati essenziali per fatturazione
+  - **Movimenti**: comunicazione carichi/scarichi per valorizzazione magazzino
+
+### 7.2 Punti di Integrazione Previsti
+
+\`\`\`
+┌─────────────────────────┐         ┌──────────────────────────┐
+│   App Noleggi            │         │   Gestionale             │
+│                          │         │                          │
+│  ┌───────────────────┐   │   API   │  ┌────────────────────┐  │
+│  │ Anagrafica Clienti │──┼────────┼─▶│ Ciclo Attivo       │  │
+│  └───────────────────┘   │         │  │ (fatture, note)    │  │
+│                          │◀────────┼──┤                    │  │
+│  ┌───────────────────┐   │         │  └────────────────────┘  │
+│  │ Ordini Confermati  │──┼────────┼─▶│ Ciclo Passivo      │  │
+│  └───────────────────┘   │         │  │ (ordini fornitori) │  │
+│                          │         │  └────────────────────┘  │
+│  ┌───────────────────┐   │         │                          │
+│  │ Movimenti / DDT    │──┼────────┼─▶│ Magazzino            │  │
+│  │ (carico/scarico)   │   │         │  │ (valorizzazione)   │  │
+│  └───────────────────┘   │         │  └────────────────────┘  │
+│                          │         │                          │
+│  ┌───────────────────┐   │         │  ┌────────────────────┐  │
+│  │ Catalogo Prodotti │◀────────────┼──│ Anagrafica         │  │
+│  │ (allineamento)    │   │         │  │ Prodotti           │  │
+│  └───────────────────┘   │         │  └────────────────────┘  │
+└─────────────────────────┘         └──────────────────────────┘
+\`\`\`
+
+### 7.3 Strategia di Sincronizzazione
+
+1. **Doppia gestione**: l'app opera sul proprio DB in autonomia
+2. **Batch periodico** (configurabile, default ogni 15 min) o **su evento** (alla conferma di un ordine/movimento)
+3. **Campo \`ultima_sincronizzazione\`** su ogni entità sincronizzabile
+4. **Log delle sincronizzazioni** per tracciare errori e riconciliazioni
+5. **Meccanismo retry** con backoff esponenziale in caso di errore API
+
+---
+
+## 8. Interfaccia Utente
+
+### 8.1 Struttura Generale
+
+L'interfaccia è una **SPA (Single Page Application)** con sidebar laterale fissa (240px) e area contenuto dinamica. Il prototipo implementa **8 pagine** collegate da navigazione JavaScript \`showPage()\` + **2 modali** (dettaglio ordine + nuovo preventivo).
+
+### 8.2 Schema Navigazione
+
+| Sezione sidebar | Pagina | ID pagina | Navigate da |
+|---|---|---|---|
+| **Visuale** | Dashboard | \`page-dashboard\` | Sidebar → "Dashboard" |
+| **Visuale** | Catalogo Prodotti | \`page-catalogo\` | Sidebar → "Catalogo" |
+| **Visuale** | Dettaglio Prodotto | \`page-dettaglio-prodotto\` | Click card prodotto in Catalogo |
+| **Visuale** | Calendario Eventi | \`page-calendario\` | Sidebar → "Calendario Eventi" |
+| **Operativo** | Preventivi | \`page-preventivi\` | Sidebar → "Preventivi" |
+| **Operativo** | Ordini | \`page-ordini\` | Sidebar → "Ordini" |
+| **Operativo** | DDT / Movimenti | \`page-ddt\` | Sidebar → "DDT / Movimenti" |
+| **Anagrafiche** | Clienti | \`page-clienti\` | Sidebar → "Clienti" |
+
+### 8.3 Descrizione Pagina per Pagina
+
+---
+
+#### 8.3.1 Dashboard (\`page-dashboard\`)
+
+**Purpose:** Vista operativa quotidiana — l'operatore apre la mattina e vede subito cosa è urgente.
+
+**Layout:**
+- Topbar: titolo "Dashboard" + timestamp ultimo aggiornamento + pulsante "Nuovo Preventivo"
+- Contenuto: griglia KPI (4 colonne) → griglia 2:1 (tabella ordini + pannelli laterali) → tabella DDT
+
+**Sezione A — KPI Cards (4 colonne):**
+
+| KPI | Valore demo | Fonte dati | Colore |
+|---|---|---|---|
+| Ordini Attivi | 12 | \`COUNT(ordini WHERE stato IN ('confermato','in_allestimento','in_corso'))\` | \`--accent\` |
+| Preventivi in Scadenza | 5 | \`COUNT(preventivi WHERE data_scadenza <= TODAY+7 AND stato = 'inviato')\` | \`--warn\` |
+| Prossimi Impegni | 3 | \`COUNT(ordini WHERE data_inizio <= TODAY+3 AND stato != 'completato')\` | default |
+| Disp. Critica | 7 | \`COUNT(prodotti WHERE disponibilita_pct < 20)\` | \`--danger\` |
+
+Ogni KPI ha una sottoriga con variazione vs mese precedente o contesto aggiuntivo.
+
+**Sezione B — Griglia 2:1:**
+
+*Colonna sinistra (2/3) — Tabella "Ordini Attivi per Stato":*
+
+| Colonna | Tipo | Note |
+|---|---|---|
+| Ordine | \`#YYYY/NNN\` monospace, clickabile → dettaglio ordine | |
+| Cliente | testo | |
+| Evento | testo | |
+| Dal | data \`DD/MM\` | |
+| Al | data \`DD/MM\` | |
+| Stato | pill colore | \`pill-green\` = In allestimento, \`pill-blue\` = Confermato, \`pill-gray\` = Bozza |
+
+*Colonna destra (1/3) — 2 card empilate:*
+
+1. **Preventivi in Scadenza** — lista compatta con: nome cliente, importo, merce, pill scadenza (rosso <3gg, giallo <7gg)
+2. **Disponibilità Critica** — lista prodotti con disponibilità residua vs totale, colorata in base a soglia
+
+**Sezione C — Tabella "Ultimi Movimenti (DDT)":**
+
+| Colonna | Tipo | Note |
+|---|---|---|
+| DDT | \`#YYYY/NNN\` monospace | |
+| Tipo | pill \`pill-red\` = Uscita, \`pill-green\` = Ingresso | |
+| Ordine | \`#YYYY/NNN\` link | |
+| Data | \`DD/MM/YYYY\` | |
+| Articoli | testo compatto (es. "120 sedie, 15 tavoli") | |
+| Stato | pill colore | |
+
+**API necessarie:**
+- \`GET /dashboard/riepilogo\` → KPI cards
+- \`GET /dashboard/impegni-prossimi\` → tabella ordini imminenti
+- \`GET /dashboard/preventivi-scaduti\` → lista preventivi in scadenza
+- \`GET /dashboard/disponibilita-critica\` → prodotti sotto soglia
+- \`GET /movimenti?limit=5&sort=-data\` → ultimi DDT
+
+**Interazioni:**
+- Click su riga ordine → apre modale dettaglio ordine
+- Click su "Vedi tutti →" (DDT) → naviga a \`page-ddt\`
+- Click "+ Nuovo Preventivo" → apre modale wizard multi-step (prototipato)
+
+---
+
+#### 8.3.2 Catalogo Prodotti (\`page-catalogo\`)
+
+**Purpose:** Vista elenco prodotti con filtro rapido — il catalogo è il punto di partenza per creare preventivi/ordini e per verificare disponibilità.
+
+**Layout:**
+- Topbar: titolo "Catalogo Prodotti" + pulsanti "Esporta CSV" e "+ Nuovo Prodotto"
+- Filtri: barra ricerca testo + dropdown categoria + dropdown stato
+- Chips categoria: selezione rapida con conteggio prodotti per categoria
+- Griglia card prodotto: layout auto-fill, min 220px per card
+
+**Card Prodotto:**
+
+Ogni card contiene:
+- **Immagine**: \`aspect-ratio: 4/3\`, \`object-fit: cover\`
+- **Nome**: grassetto, 13px
+- **Meta**: codice articolo + quantità totale, 11px, colore muted (es. "SED-001 · 200 pz")
+- **Prezzo**: monospace, colore accent, 13px (es. "€ 2,00 /giorno")
+
+**Interazioni:**
+- Click card → naviga a \`page-dettaglio-prodotto\`
+- Click chip categoria → filtra griglia
+- Click "+ Nuovo Prodotto" → apre form creazione (Fase 1)
+- Click "Esporta CSV" → download CSV del catalogo filtrato
+
+**Responsive:**
+- Desktop: griglia 4-5 colonne
+- Tablet: 3 colonne
+- Mobile (<920px): 2 colonne, sidebar nascosta, filtri in colonna
+
+---
+
+#### 8.3.3 Dettaglio Prodotto (\`page-dettaglio-prodotto\`)
+
+**Purpose:** Vista completa di un prodotto con info anagrafiche, stato disponibilità e diagramma Gantt degli impegni.
+
+**Layout:**
+- Topbar: breadcrumb "← Catalogo" + nome prodotto + pulsanti "Modifica" e "Verifica Disponibilità"
+- Griglia 2:1 superiore (info + stats)
+- Gantt chart interattivo (sezione piena larghezza)
+- Legenda impegni + riepilogo disponibilità (griglia 2 colonne)
+
+**Sezione A — Griglia 2:1 (Immagine + Info | Stats)**
+
+*Colonna sinistra (2/3):*
+1. **Card Immagine** — immagine prodotto a tutta larghezza, \`aspect-ratio: 16/9\`, \`object-fit: cover\`
+2. **Card "Informazioni Prodotto"** — tabella a 2 colonne
+3. **Card "Stato Disponibilità"** — griglia 3 colonne con KPI mini
+4. **Card "Listino Prezzi"** — tabella tariffe
+
+*Colonna destra (1/3):*
+
+**Sezione B — Diagramma Gantt**
+
+Componente interattivo a tutta larghezza che mostra timeline degli impegni su 22 giorni.
+
+**Sezione C — Legenda + Riepilogo (griglia 2 colonne)**
+
+*Colonna sinistra — "Impegni Articolo":*
+Lista clickabile di tutti gli impegni con: punto colore, nome cliente, numero ordine, periodo, nome evento, quantità.
+
+*Colonna destra — "Riepilogo Disponibilità":*
+- Totale magazzino / Impegnati / Media disponibilità giornaliera
+- Giorni a disponibilità piena
+- Picco impegni / Giorno più libero
+- **Sparkline** — mini-grafico a barre verticali colorate per giorno
+
+**API necessarie:**
+- \`GET /prodotti/:id\` → info prodotto
+- \`GET /prodotti/:id/disponibilita?from=YYYY-MM-DD&to=YYYY-MM-DD\` → disponibilità giornaliera
+- \`GET /ordini?prodottoId=:id&stato=in_corso,confermato,in_allestimento\` → impegni per il Gantt
+
+---
+
+#### 8.3.4 Calendario Eventi (\`page-calendario\`)
+
+**Purpose:** Vista Gantt 2 mesi — mostra tutti gli eventi/ordini su una timeline condivisa con barre colore per stato.
+
+**Layout:**
+- Topbar: titolo + barra navigazione Gantt (◀ 2 sett / Oggi / 2 sett ▶ + label periodo)
+- Filtri: ricerca testo per evento/cliente, dropdown stato
+- Griglia principale: Gantt eventi a sinistra, pannelli legenda a destra
+
+**Timeline:**
+- 42px per giorno, 2 mesi (1 Giu — 31 Lug 2026)
+- Drag-to-pan con mouse
+- Navigazione rapida: ◀ 2 sett / Oggi / 2 sett ▶
+- Scroll automatico al giorno odierno al caricamento
+- Weekend evidenziati con sfondo leggero
+
+**Pannelli Legenda (colonna destra, 300px):**
+1. **Riepilogo** — eventi totali, nel periodo, clienti
+2. **Prossimi Eventi** — lista ordinata per data
+3. **Legenda Stati** — conteggio eventi per stato
+
+**Interazioni:**
+- Drag-to-pan sulla timeline
+- Click su voce legenda → scrolla Gantt al periodo
+- Click su riga/barra → apre modale dettaglio ordine
+- Filtri combinabili (testo + stato)
+
+---
+
+#### 8.3.5 Preventivi (\`page-preventivi\`)
+
+**Purpose:** Elenco preventivi con filtro e stato.
+
+**Tabella Preventivi:**
+
+| Colonna | Tipo | Formato |
+|---|---|---|
+| Numero | monospace | \`#YYYY/NNN\` |
+| Cliente | testo | — |
+| Periodo | testo | \`DD-DD/MM/YYYY\` |
+| Totale | monospace, right | \`€ X.XXX,XX\` |
+| Stato | pill colore | — |
+| Scadenza | monospace | \`DD/MM\` |
+| Azioni | — | Pulsante "Apri →" |
+
+**Codice Stati Preventivo:**
+
+| Stato | Pill | Colore |
+|---|---|---|
+| Bozza | \`pill-gray\` | Grigio |
+| Inviato | \`pill-amber\` | Giallo |
+| Accettato | \`pill-green\` | Verde |
+| Trasformato | \`pill-blue\` | Blu |
+| Scaduto | \`pill-red\` | Rosso |
+
+##### 8.3.5a Modale "Nuovo Preventivo" (overlay multi-step)
+
+**Purpose:** Wizard di creazione preventivo in 3 step.
+
+- **Step 1 — Dati ordine:** Cliente, Data evento, Nome evento, Indirizzo venue, Referente, Giorni noleggio, Note
+- **Step 2 — Righe ordine:** Griglia articoli selezionati con disponibilità 3 livelli (V/T/P), sconto per riga e globale
+- **Step 3 — Riepilogo:** Card dati evento + riepilogo costi + tabella righe complete
+
+##### 8.3.5b Modale "Righe ordine" (overlay secondaria)
+
+**Purpose:** Ricerca e selezione articoli dal catalogo con disponibilità 3 livelli, input qtà direttamente nella riga, warning disponibilità.
+
+---
+
+#### 8.3.6 Ordini (\`page-ordini\`)
+
+**Purpose:** Elenco ordini attivi e storico.
+
+**Tabella Ordini:**
+
+| Colonna | Tipo | Formato |
+|---|---|---|
+| Ordine | monospace | \`#YYYY/NNN\` |
+| Cliente | testo | — |
+| Evento | testo | — |
+| Inizio | monospace | \`DD/MM\` |
+| Fine | monospace | \`DD/MM\` |
+| Totale | monospace, right | \`€ X.XXX,XX\` |
+| Stato | pill colore | — |
+| Azioni | — | "Apri →" |
+
+---
+
+#### 8.3.7 Dettaglio Ordine (modale \`order-modal\`)
+
+**Purpose:** Vista completa di un ordine — timeline stato, dati evento, righe ordine, riepilogo costi, DDT associati, foto allestimento, questionario post-evento AI.
+
+**Sezioni:**
+- **Timeline Stato** — 6 step conectorati (Confermato → DDT Uscita → Allestimento → In corso → DDT Ingresso → Completato)
+- **Dati Evento** — data evento (in grassetto), cliente, evento, indirizzo, referente, allestimento, smontaggio
+- **Riepilogo Costi** — subtotale, sconto, totale
+- **Righe Ordine** — tabella prodotti con codice, qta, tipo prezzo, prezzo unitario, sconto, totale riga
+- **DDT Associati** — numero DDT, tipo, data, articoli, stato, pulsante PDF
+- **Foto Allestimento** — griglia thumbnail con zoom overlay e navigazione ◀/▶
+- **Questionario Post-Evento AI** — stelle 1–5, venue, adattabilità, accesso, puntualità, danni, feedback, miglioramenti, tag AI
+
+---
+
+#### 8.3.8 DDT / Movimenti (\`page-ddt\`)
+
+**Purpose:** Elenco documenti di trasporto (DDT di uscita e ingresso).
+
+**Tabella DDT:**
+
+| Colonna | Tipo | Formato |
+|---|---|---|
+| DDT | monospace | \`#YYYY/NNN\` |
+| Tipo | pill | \`pill-red\` = Uscita, \`pill-green\` = Ingresso |
+| Ordine | monospace link | \`#YYYY/NNN\` |
+| Cliente | testo | |
+| Data | monospace | \`DD/MM/YYYY\` |
+| Articoli | testo | "6 righe · 89 pz" |
+| Stato | pill | \`pill-green\` = Confermato, \`pill-gray\` = Bozza |
+| Azioni | — | "Apri →" |
+
+---
+
+#### 8.3.9 Clienti (\`page-clienti\`)
+
+**Purpose:** Anagrafica clienti con sync gestionale.
+
+**Tabella Clienti:**
+
+| Colonna | Tipo | Formato |
+|---|---|---|
+| Codice | monospace | \`CLT-NNN\` |
+| Ragione Sociale | grassetto | |
+| P.IVA | monospace | \`XXXXXXXXXXX\` |
+| Città | testo | |
+| Referente | testo | Nome Cognome |
+| Telefono | monospace | |
+| Ultima Sync | monospace, 11px | \`DD/MM HH:MM\` |
+| Azioni | — | "Apri →" |
+
+---
+
+## 9. Dashboard e KPI
+
+### 9.1 KPI Principali
+
+| Indicatore | Fonte | Aggiornamento |
+|---|---|---|
+| **Ordini attivi** | Ordini in stato confermato/in_corso | Real-time |
+| **Preventivi in scadenza** | Preventivi con data_scadenza ≤ 7gg | Real-time |
+| **Prossimi impegni** | Ordini con data_inizio ≤ 3gg | Real-time |
+| **Disponibilità critica** | Prodotti con disponibilità < 20% in date future | Real-time |
+| **Totale fatturato (mese)** | Ordini completati nel periodo | Mese corrente |
+| **Tasso trasformazione** | Preventivi trasformati / totale inviati | Mese corrente |
+
+### 9.2 Sezione Solleciti (AI future)
+
+- **Dashboard dedicata** con vista preventivi in scadenza / scaduti
+- **Priorità** basata su: data scadenza, valore preventivo, storico cliente
+- **Azioni rapide**: invia sollecito email, proroga scadenza, archivia
+- **AI futura**: generazione automatica testo sollecito, suggerimento sconto, predizione probabilità trasformazione
+
+---
+
+## 10. Considerazioni AI (Evolutive)
+
+L'argomento AI è aperto e verrà sviluppato in una fase successiva. Aree di applicazione identificate:
+
+1. **Creazione offerta assistita**: suggerimento prodotti in base a tipologia evento, storico cliente, stagionalità
+2. **Solleciti automatici**: generazione testo reminder preventivi scaduti, prioritizzazione
+3. **Previsione disponibilità**: stima picchi di domanda, suggerimento acquisti
+4. **Analisi danneggiamenti**: pattern su prodotti più soggetti a danneggiamento
+5. **Chatbot / assistente**: interfaccia conversazionale per operatori
+
+Il database e l'architettura sono progettati per raccogliere i dati necessari per alimentare questi modelli in futuro.
+
+---
+
+## 11. Piano di Sviluppo
+
+### 11.1 Fasi
+
+| Fase | Durata | Attività |
+|---|---|---|
+| **Fase 0 — Setup** | 1 settimana | Setup repo, ambiente dev (Docker), CI/CD base, scheletro frontend/backend, Prisma schema, migrazioni DB |
+| **Fase 1 — Core** | 3 settimane | Auth + ruoli, CRUD clienti, CRUD catalogo (categorie + prodotti) |
+| **Fase 2 — Noleggio** | 3 settimane | Preventivi (CRUD + wizard + PDF), Ordini (trasformazione + CRUD), gestione sconti |
+| **Fase 3 — Movimenti** | 2 settimane | DDT (uscita/ingresso), cambio stato articoli, calendario disponibilità |
+| **Fase 4 — Dashboard** | 1 settimana | KPI, report, vista solleciti, integrazione calendario in dashboard |
+| **Fase 5 — Gestionale** | 2 settimane | Integrazione API gestionale (adapter pattern), sincronizzazione, log |
+| **Fase 6 — Rifiniture** | 1 settimana | Testing E2E, responsive design, performance tuning, deploy VPS |
+| **Totale** | **13 settimane** | |
+
+### 11.2 Milestone
+
+| # | Milestone | Criterio |
+|---|---|---|
+| M0 | Prototipo UI | Prototipo HTML interattivo con 8 schermate, Gantt, dati reali (✅ completato) |
+| M1 | Setup completato | Frontend e backend in esecuzione in dev, DB migrato |
+| M2 | Catalogo e clienti | CRUD completo clienti e prodotti con UI |
+| M3 | Preventivi e ordini | Wizard preventivo funzionante, trasformazione in ordine |
+| M4 | Movimenti | DDT uscita/ingresso confermano e cambiano stato articoli |
+| M5 | Calendario eventi e dashboard | Vista eventi Gantt aggiornata, KPI corretti |
+| M6 | Integrazione | Sync con gestionale funzionante (end-to-end) |
+| M7 | Go-live | Deploy su VPS, test utente, documentazione |
+
+---
+
+## 12. Requisiti Non Funzionali
+
+| Requisito | Specifica |
+|---|---|
+| **Performance** | API risponde in <500ms per il 95% delle richieste |
+| **Disponibilità** | 99.5% uptime (fermo programmato notturno) |
+| **Sicurezza** | HTTPS, JWT con refresh rotation, password bcrypt, rate limiting, input sanitization, CORS configurato |
+| **Backup** | Backup DB giornaliero (PostgreSQL pg_dump), retention 30 giorni |
+| **Logging** | Log strutturato (winston/pino), rotazione giornaliera |
+| **Responsive** | UI fruibile da tablet (minimo 1024px di larghezza) |
+
+---
+
+## 13. Note Finali
+
+- La specifica è **viva** e potrà essere raffinata durante lo sviluppo
+- Le API del gestionale, quando definite, determineranno l'implementazione esatta del modulo di integrazione
+- Il design UI/UX è stato validato tramite prototipo HTML interattivo
+- L'architettura multi-tenant-ready permette di ospitare più società dello stesso gruppo su una singola istanza
+- I PDF (preventivi, ordini, DDT) seguiranno il template grafico del brand aziendale
+
+---
+
+## 14. Prototipo Realizzato
+
+### 14.1 File e Struttura
+
+| File | Descrizione |
+|---|---|
+| \`index.html\` | Pagina launcher/overview con 8 card che linkano alle singole schermate + note demo + footer |
+| \`app.html\` | Prototipo principale — SPA completa con 8 pagine + 2 modali, supporto parametri URL (\`?page=X\`) + footer |
+| \`oltre-il-giardino-gestione-noleggi.html\` | Copia di backup della SPA |
+| \`specifica.html\` | Visore della specifica tecnica |
+| \`assets/images/\` | 44 immagini prodotto/categoria/hero/logo |
+
+**Parametri URL supportati:** \`app.html?page=dashboard\` | \`catalogo\` | \`dettaglio-prodotto\` | \`calendario\` | \`preventivi\` | \`ordini\` | \`ddt\` | \`clienti\`
+
+### 14.2 Stack Prototipo
+
+| Componente | Tecnologia |
+|---|---|
+| Rendering | HTML + CSS + JavaScript vanilla (nessuna dipendenza esterna) |
+| Layout | CSS Grid + Flexbox |
+| Icone | SVG inline nella sidebar |
+| Navigazione | SPA con \`showPage(id)\` e classi \`.page.active\` |
+| Gantt | Engine JavaScript puro: costruzione dinamica DOM, drag-to-pan, scroll-by, scroll-to-commit, sparkline |
+| Design system | CSS custom properties (\`:root\` tokens) con palette OKLch |
+
+### 14.3 Design System Applicato
+
+| Token | Valore | Uso |
+|---|---|---|
+| \`--bg\` | \`oklch(97% 0.006 145)\` | Sfondo applicazione |
+| \`--surface\` | \`oklch(100% 0 0)\` | Card, sidebar, superfici |
+| \`--fg\` | \`oklch(18% 0.015 145)\` | Testo primario |
+| \`--muted\` | \`oklch(50% 0.015 145)\` | Testo secondario |
+| \`--border\` | \`oklch(91% 0.008 145)\` | Bordi, separatori |
+| \`--accent\` | \`oklch(52% 0.14 155)\` | Colore azione primario (verde erba) |
+| \`--success\` | \`oklch(55% 0.15 145)\` | Stato confermato / disponibile |
+| \`--warn\` | \`oklch(65% 0.15 80)\` | Stato in corso / attenzione |
+| \`--danger\` | \`oklch(55% 0.18 25)\` | Stato critico / esaurito |
+
+### 14.4 Dati Demo
+
+| Entità | Quantità |
+|---|---|
+| Categorie | 13 |
+| Prodotti | 20 |
+| Clienti | 7 |
+| Ordini | 6 |
+| Preventivi | 7 |
+| DDT | 5 |
+| Immagini | 44 |
+
+### 14.5 Note per Sviluppo
+
+**Cosa funziona nel prototipo:**
+- Navigazione SPA completa tra 8 pagine + modale dettaglio ordine
+- Gantt interattivo con drag-to-pan, scroll-by, scroll-to-commit, sparkline
+- Filtri ricerca e selezione stato
+- Pill colore per stati
+- Timeline stato ordine a 6 step
+- Responsive base (sidebar collapse a 920px)
+- Foto allestimento con griglia thumbnail e zoom overlay
+- Questionario post-evento AI
+
+**Cosa manca e va implementato:**
+
+| Componente | Fase | Note |
+|---|---|---|
+| Wizard "Nuovo Preventivo" | Prototipato | Modale 3 step con disponibilità 3 livelli |
+| Foto allestimento | Prototipato | Manca upload reale, storage backend |
+| Questionario AI | Prototipato | Manca persistenza backend, calcolo AI reale |
+| Wizard "Nuovo Ordine" | Fase 2 | Trasformazione da preventivo o creazione diretta |
+| Dettaglio Preventivo | Fase 2 | Vista completa con azioni |
+| Dettaglio Cliente | Fase 1 | Vista anagrafica con storico |
+| Form creazione Cliente | Fase 1 | Inserimento anagrafica |
+| Form modifica Prodotto | Fase 1 | Modifica info, prezzi, quantità |
+| Wizard DDT | Fase 3 | Creazione movimento con selezione righe |
+| Paginazione tabella | Fase 1 | Componente paginazione |
+| Export CSV/PDF | Fase 4 | Download dati da tabella |
+| Sidebar mobile | Fase 6 | Toggle hamburger |
+| Autenticazione | Fase 1 | Login page, JWT, refresh token, ruoli |
+| Integrazione gestionale | Fase 5 | Adapter pattern per sync |
+
+---
+
+## 15. Note Demo
+
+Il prototipo include un **footer** in tutte le pagine con nota "Demo dimostrativa" e crediti.
+
+---
+
+*Documento generato il 24/06/2026 — Specifica Tecnica v1.9 — Prototipo Gestione Noleggi Oltre Il Giardino SRL*`;
+
+    // Parse and render
+    document.getElementById('loading').remove();
+    document.getElementById('content').innerHTML = marked.parse(md);
+
+    // Build TOC
+    const headings = document.querySelectorAll('.md h1, .md h2, .md h3, .md h4');
+    const tocList = document.getElementById('toc-list');
+    headings.forEach((h, i) => {
+      h.id = 'h-' + i;
+      const a = document.createElement('a');
+      a.href = '#h-' + i;
+      a.textContent = h.textContent;
+      a.className = h.tagName.toLowerCase();
+      tocList.appendChild(a);
+    });
+
+    // Active TOC highlight on scroll
+    const tocLinks = tocList.querySelectorAll('a');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          tocLinks.forEach(l => l.classList.remove('active'));
+          const link = tocList.querySelector('a[href="#' + e.target.id + '"]');
+          if (link) link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-80px 0px -70% 0px' });
+    headings.forEach(h => observer.observe(h));
+
+    // Back to top
+    const btn = document.getElementById('backTop');
+    window.addEventListener('scroll', () => {
+      btn.classList.toggle('visible', window.scrollY > 400);
+    });
+  </script>
+</body>
+</html>
