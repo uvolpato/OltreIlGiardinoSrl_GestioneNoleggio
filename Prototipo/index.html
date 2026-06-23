@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Oltre Il Giardino — Gestione Noleggi</title>
+  <style>
+    :root {
+      --bg:      oklch(97% 0.006 145);
+      --surface: oklch(100% 0 0);
+      --fg:      oklch(18% 0.015 145);
+      --muted:   oklch(50% 0.015 145);
+      --border:  oklch(91% 0.008 145);
+      --accent:  oklch(52% 0.14 155);
+      --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
+      --font-display: 'Iowan Old Style', 'Charter', Georgia, serif;
+      --font-body:    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .hero {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 32px 48px;
+      text-align: center;
+    }
+    .hero-logo {
+      width: 120px;
+      height: auto;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 12px;
+      color: var(--fg);
+    }
+    .hero p {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 540px;
+      margin: 0 auto;
+    }
+    .demo-note {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 32px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .demo-note strong { color: var(--fg); }
+
+    .hero-badge {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+      cursor: pointer;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px color-mix(in oklch, var(--accent) 10%, transparent);
+      transform: translateY(-2px);
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .card h2 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 6px;
+    }
+    .card p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0 0 16px;
+      flex: 1;
+    }
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .card-meta .dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+    .card-arrow {
+      margin-left: auto;
+      color: var(--accent);
+      font-size: 16px;
+      font-weight: 600;
+      transition: transform 0.15s;
+    }
+    .card:hover .card-arrow { transform: translateX(3px); }
+
+    /* Icon palette */
+    .icon-green  { background: oklch(94% 0.04 145); color: oklch(42% 0.14 145); }
+    .icon-blue   { background: oklch(94% 0.04 250); color: oklch(42% 0.14 250); }
+    .icon-amber  { background: oklch(95% 0.05 80);  color: oklch(48% 0.14 80);  }
+    .icon-purple { background: oklch(94% 0.04 300); color: oklch(45% 0.14 300); }
+    .icon-rose   { background: oklch(94% 0.04 25);  color: oklch(48% 0.14 25);  }
+    .icon-slate  { background: oklch(94% 0.01 250); color: oklch(40% 0.02 250); }
+    .icon-teal   { background: oklch(94% 0.04 175); color: oklch(42% 0.12 175); }
+    .icon-orange { background: oklch(94% 0.05 55);  color: oklch(48% 0.14 55);  }
+
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      border-top: 1px solid var(--border);
+      background: color-mix(in oklch, var(--bg) 92%, transparent);
+      backdrop-filter: blur(8px);
+      padding: 10px 32px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      z-index: 100;
+    }
+
+    @media (max-width: 680px) {
+      .hero { padding: 48px 20px 32px; }
+      .grid { padding: 0 20px 48px; grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <img src="assets/images/logo.png" alt="Oltre Il Giardino" class="hero-logo" />
+    <h1>Gestione Noleggi</h1>
+    <p>Prototipo funzionale del sistema di gestione noleggi — catalogo, ordini, disponibilità, preventivi e documenti di trasporto.</p>
+    <span class="hero-badge">Prototipo interattivo</span>
+  </header>
+
+  <div class="demo-note">
+    <strong>Nota:</strong> Questo è un prototipo dimostrativo. Non è un'applicazione reale: i dati sono fittizi e alcune funzionalità potrebbero non essere completamente operative.
+  </div>
+
+  <main class="grid">
+
+    <a class="card" href="app.html?page=dashboard">
+      <div class="card-icon icon-green">📊</div>
+      <h2>Dashboard</h2>
+      <p>Panoramica generale con KPI, diagramma di Gantt delle prossime 3 settimane e ordini in corso.</p>
+      <div class="card-meta">
+        <span>KPI · Gantt · Ordini</span>
+        <span class="dot"></span>
+        <span>4 card · 5 ordini</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="app.html?page=catalogo">
+      <div class="card-icon icon-blue">🪑</div>
+      <h2>Catalogo Prodotti</h2>
+      <p>Griglia articoli con foto reali, prezzo a giorno, quantità a magazzino e stato disponibilità.</p>
+      <div class="card-meta">
+        <span>20 prodotti · 13 categorie</span>
+        <span class="dot"></span>
+        <span>Dettaglio + Gantt</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="app.html?page=dettaglio-prodotto">
+      <div class="card-icon icon-purple">🔍</div>
+      <h2>Dettaglio Prodotto</h2>
+      <p>Scheda tecnica a tab con specifiche, listino, galleria con zoom e diagramma Gantt disponibilità con legenda impegni.</p>
+      <div class="card-meta">
+        <span>4 tab · Gantt · Zoom</span>
+        <span class="dot"></span>
+        <span>Scheda tecnica</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="app.html?page=calendario">
+      <div class="card-icon icon-amber">📅</div>
+      <h2>Calendario Eventi</h2>
+      <p>Gantt 2 mesi (Giugno–Luglio) con 12 eventi, barre colore per stato, drag-to-pan e filtri per evento e stato.</p>
+      <div class="card-meta">
+        <span>12 eventi · Filtri</span>
+        <span class="dot"></span>
+        <span>Timeline scrollabile</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="app.html?page=preventivi">
+      <div class="card-icon icon-teal">💰</div>
+      <h2>Preventivi</h2>
+      <p>Tabella preventivi con stato, totali e date. Wizard "Nuovo Preventivo" a 3 step con selezione articoli e calcolo disponibilità.</p>
+      <div class="card-meta">
+        <span>6 preventivi · Wizard</span>
+        <span class="dot"></span>
+        <span>3 step · Modale</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="app.html?page=ordini">
+      <div class="card-icon icon-rose">📋</div>
+      <h2>Ordini</h2>
+      <p>Tabella ordini con stato, cliente, data, totale. Modale dettaglio con timeline, righe, costi, DDT e foto allestimento.</p>
+      <div class="card-meta">
+        <span>6 ordini · Modale</span>
+        <span class="dot"></span>
+        <span>Timeline · Foto · AI</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="app.html?page=ddt">
+      <div class="card-icon icon-slate">🚚</div>
+      <h2>DDT — Documenti di Trasporto</h2>
+      <p>Elenco documenti di trasporto con direzione, stato, articoli e link all'ordine associato.</p>
+      <div class="card-meta">
+        <span>6 DDT · Uscita/Rientro</span>
+        <span class="dot"></span>
+        <span>Filtri stato</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card" href="app.html?page=clienti">
+      <div class="card-icon icon-orange">👥</div>
+      <h2>Clienti</h2>
+      <p>Anagrafica clienti con P.IVA, contatto, email, telefono, indirizzo e numero ordini associati.</p>
+      <div class="card-meta">
+        <span>6 clienti · Ricerca</span>
+        <span class="dot"></span>
+        <span>Anagrafica</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+  </main>
+
+  <footer class="footer">
+    Oltre Il Giardino — Noleggi Creativi · Prototipo ad alta fedeltà · Realizzato da <strong>Ugo Volpato</strong> AI Consultant
+  </footer>
+
+</body>
+</html>
