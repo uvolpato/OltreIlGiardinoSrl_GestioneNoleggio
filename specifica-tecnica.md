@@ -1,9 +1,9 @@
 # Specifica Tecnica — Prototipo Gestione Noleggi Oltre Il Giardino SRL
 
-> **Versione:** 1.9  
+> **Versione:** 2.0  
 > **Data:** 24/06/2026  
-> **Stato:** Prototipo completato  
-> **Prossimo passo:** Validazione prototipo → Sviluppo Fase 0
+> **Stato:** Specifica aggiornata v2.0  
+> **Prossimo passo:** Validazione prototipo → Sviluppo Fase 1
 
 ---
 
@@ -11,9 +11,13 @@
 
 ### 1.1 Contesto
 
-Oltre Il Giardino SRL opera nel settore del noleggio di suppellettili, arredi, luci e allestimenti per eventi privati e aziendali (matrimoni, cerimonie, fiere, convegni). L'azienda dispone di un catalogo prodotti organizzato in categorie merceologiche e di un gestionale esistente che gestisce la contabilità, i movimenti fiscali e la valorizzazione di magazzino.
+Oltre Il Giardino SRL opera nel settore del noleggio di suppellettili, arredi, luci e allestimenti per eventi privati e aziendali (matrimoni, cerimonie, fiere, convegni). L'azienda dispone di un catalogo prodotti organizzato in categorie merceologiche.
 
-Si rende necessario un applicativo web dedicato che gestisca il flusso operativo: preventivazione, ordini, movimentazione fisica della merce (DDT di carico/scarico), tracciamento stato articoli e disponibilità.
+**Architettura documentale:**
+- **Questo sistema (Gestione Noleggi)** è il sistema autore di tutti i documenti: preventivi, conferme d'ordine, DDT (uscita/ingresso), fatture, note di credito, ricevute. Genera i PDF e li mette a disposizione per la stampa/invio.
+- **Gestionale esterno** è il sistema contabile/fiscale che riceve i movimenti generati da questo sistema per contabilità generale, partita doppia, valorizzazione di magazzino e dichiarativi. I due sistemi dialogano via API o esportazione strutturata.
+
+Si rende necessario un applicativo web dedicato che gestisca il flusso operativo completo: preventivazione, ordini, documenti di trasporto (DDT), fatturazione, movimentazione fisica della merce, tracciamento stato articoli e disponibilità.
 
 ### 1.2 Scopo del documento
 
@@ -26,14 +30,17 @@ Il presente documento costituisce la specifica tecnica per la realizzazione di u
 ### 1.3 Glossario
 
 | Termine | Descrizione |
-|---|---|
-| **Gestionale** | Sistema ERP/contabile esistente che gestisce fiscalità, contabilità e valorizzazione magazzino |
-| **DDT Uscita** | Documento di Trasporto per carico merce in uscita verso evento |
-| **DDT Ingresso** | Documento di Trasporto per scarico merce in rientro da evento |
+|---|---|---|
+| **Gestionale esterno** | Sistema ERP/contabile esistente che gestisce fiscalità, contabilità generale e valorizzazione magazzino. Riceve dati da questo sistema. |
+| **Questo sistema** | Gestione Noleggi: sistema autore di preventivi, ordini, DDT, fatture e documenti di trasporto |
+| **DDT Uscita** | Documento di Trasporto per carico merce in uscita verso evento (generato da questo sistema, anche in formato PDF) |
+| **DDT Ingresso** | Documento di Trasporto per scarico merce in rientro da evento (generato da questo sistema) |
+| **Fattura** | Documento fiscale emesso da questo sistema e trasmesso al gestionale esterno per contabilità |
 | **Preventivo** | Ipotesi di noleggio con impegno non vincolante per il periodo indicato |
 | **Ordine** | Trasformazione del preventivo in impegno definitivo |
 | **Articolo** | Prodotto a catalogo (es. "Sedia Chiavari bianca") |
 | **Disponibilità** | Quantità di un articolo non impegnata in un dato intervallo di date |
+| **Prodotto composito** | Articolo composto da più sotto-articoli (es. Bancone Pallet = piano + cavalletti × 2) |
 
 ---
 
@@ -50,50 +57,64 @@ Il presente documento costituisce la specifica tecnica per la realizzazione di u
 | **ORM** | Prisma (TypeScript-first ORM) |
 | **Database** | PostgreSQL 15+ |
 | **Autenticazione** | JWT (access + refresh token) + Sessioni web |
-| **Documenti** | PDF generation (PDFMake o Puppeteer) |
+| **Documenti** | PDF generation (PDFMake o Puppeteer) |  
+| **Fattura elettronica** | XML generato internamente, invio via API o SDI |
 | **Container** | Docker + docker-compose (sviluppo) |
 | **Deploy** | VPS tradizionale (Node + PM2, Nginx reverse proxy) |
 
 ### 2.2 Schema Architetturale
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     CLIENT (Browser)                         │
-│  React SPA ─── React Query ─── Auth Context (JWT + Session) │
-└──────────────────────────┬──────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                     CLIENT (Browser)                           │
+│  React SPA ─── React Query ─── Auth Context (JWT + Session)   │
+└──────────────────────────┬────────────────────────────────────┘
                            │ HTTPS / REST JSON
                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   REVERSE PROXY (Nginx)                      │
-│         HTTPS termination, static files, load balancing      │
-└──────────────────────────┬──────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                   REVERSE PROXY (Nginx)                        │
+│         HTTPS termination, static files, load balancing       │
+└──────────────────────────┬────────────────────────────────────┘
                            │
                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   BACKEND (Node.js + Express)                │
-│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────┐  │
-│  │ Auth    │ │ Anagraf. │ │ Ordini   │ │ Integrazione   │  │
-│  │ Module  │ │ Module   │ │ Module   │ │ Gestionale     │  │
-│  └─────────┘ └──────────┘ └──────────┘ └────────────────┘  │
-│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────┐  │
-│  │ Catalogo│ │ DDT/     │ │ Calend.  │ │ Dashboard /    │  │
-│  │ Prodotti│ │ Movim.   │ │ Disp.    │ │ Report         │  │
-│  └─────────┘ └──────────┘ └──────────┘ └────────────────┘  │
-└──────────────────────────┬──────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                   BACKEND (Node.js + Express)                  │
+│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────────┐ │
+│  │ Auth    │ │ Anagraf. │ │ Ordini   │ │ Generazione       │ │
+│  │ Module  │ │ Module   │ │ Module   │ │ Documenti (PDF)   │ │
+│  └─────────┘ └──────────┘ └──────────┘ └───────────────────┘ │
+│  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────────┐ │
+│  │ Catalogo│ │ DDT /    │ │ Calend.  │ │ Integrazione      │ │
+│  │ Prodotti│ │ Fatture  │ │ Disp.    │ │ Gestionale Esterno│ │
+│  └─────────┘ └──────────┘ └──────────┘ └───────────────────┘ │
+│  ┌──────────────────────────────────────────────────────────┐ │
+│  │ Dashboard / Report / AI (Impegnato Probabile)           │ │
+│  └──────────────────────────────────────────────────────────┘ │
+└──────────────────────────┬────────────────────────────────────┘
                            │ Prisma ORM
                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   PostgreSQL Database                        │
-│    anagrafiche, prodotti, preventivi, ordini, movimenti     │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│                   PostgreSQL Database                          │
+│  anagrafiche, prodotti, preventivi, ordini,                   │
+│  DDT, fatture, movimenti, pagamenti, logistica               │
+└───────────────────────────────────────────────────────────────┘
 
-                    INTEGRAZIONE FUTURA
-┌─────────────────────────────────────────────────────────────┐
-│              GESTIONALE ESISTENTE (da definire)              │
-│  API REST (specifiche fornite dal vendor del gestionale)    │
-│  Sincronizzazione: anagrafiche, movimenti magazzino,        │
-│  ciclo attivo/passivo                                       │
-└─────────────────────────────────────────────────────────────┘
+                    INTEGRAZIONE CON GESTIONALE ESTERNO
+┌───────────────────────────────────────────────────────────────┐
+│              GESTIONALE ESISTENTE (es. Zucchetti/TeamSystem)  │
+│                                                               │
+│  ↓ Riceve da questo sistema:                                  │
+│    - Fatture emesse (XML fattura elettronica o API)          │
+│    - Note di credito                                         │
+│    - Movimenti magazzino (carico/scarico valorizzato)        │
+│    - Anagrafiche clienti (sincronizzazione)                   │
+│                                                               │
+│  ↑ Invia a questo sistema:                                   │
+│    - Piano dei conti                                         │
+│    - Aliquote IVA                                            │
+│    - Saldo cliente / situazione contabile                    │
+│    - Giacenze valorizzate a magazzino                        │
+└───────────────────────────────────────────────────────────────┘
 ```
 
 ### 2.3 Repository
@@ -101,7 +122,53 @@ Il presente documento costituisce la specifica tecnica per la realizzazione di u
 - **frontend/**: `https://github.com/.../oltreilgiardino-frontend`
 - **backend/**: `https://github.com/.../oltreilgiardino-backend`
 
-### 2.4 Multi-tenancy
+### 2.4 Integrazione con Gestionale Esterno
+
+Il sistema Gestione Noleggi è il **sistema autore** di tutti i documenti operativi. Il gestionale esterno (contabilità/fiscale) è un **sistema ricevente**.
+
+#### Flusso documentale
+
+```
+┌──────────────────────────────────────────────────────────┐
+│               QUESTO SISTEMA (Gestione Noleggi)           │
+│                                                           │
+│  Preventivo → Ordine → DDT Uscita → DDT Ingresso        │
+│                                  ↓                        │
+│                            Fattura / Nota Credito         │
+│                                                           │
+│  Genera PDF nativamente (Puppeteer/PDFMake)              │
+│  Genera XML fattura elettronica (FatturaPA)              │
+│  Firma digitale dei documenti (firma grafometrica DDT)   │
+└──────────────────────┬───────────────────────────────────┘
+                       │
+                       ▼ API / Export
+┌──────────────────────────────────────────────────────────┐
+│              GESTIONALE ESTERNO (contabilità/fiscale)     │
+│                                                           │
+│  ↓ Riceve: fatture XML, note credito,                    │
+│    movimenti magazzino valorizzati                        │
+│                                                           │
+│  ↑ Invia: saldo cliente, situazione contabile,           │
+│    piani dei conti, aliquote IVA                         │
+└──────────────────────────────────────────────────────────┘
+```
+
+#### Modalità di integrazione (da definire con il vendor del gestionale)
+
+1. **API REST** — il gestionale espone endpoint per ricevere fatture/note credito e inviare dati contabili
+2. **Esportazione XML/SDI** — le fatture vengono generate in XML FatturaPA e inviate tramite SDI o PEC
+3. **CSV strutturato** — fallback: export/import manuale di file CSV
+
+| Direzione | Dato | Frequenza |
+|---|---|---|
+| Questo sistema → Gestionale | Fatture emesse (XML/JSON) | In tempo reale o batch giornaliero |
+| Questo sistema → Gestionale | Note di credito | In tempo reale |
+| Questo sistema → Gestionale | Movimenti magazzino valorizzati (carico/scarico da DDT) | Al momento della conferma DDT |
+| Questo sistema → Gestionale | Anagrafiche clienti (nuove/modificate) | Sincronizzazione periodica |
+| Gestionale → Questo sistema | Saldo cliente / partitario | Su richiesta o periodico |
+| Gestionale → Questo sistema | Piano dei conti e aliquote IVA | All'avvio / aggiornamenti |
+
+### 2.5 Multi-tenancy
 
 Architettura single-tenant con schema preparato per multi-tenancy futura:
 - Tabella `tenant` con identificativo univoco
@@ -192,25 +259,60 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
                     │ prezzo_unitario, tipo_prezzo, sconto_pct,      │
                     │ sconto_importo, totale_riga, note              │
                     └───────────────────────┬─────────────────────────┘
-                                            │ 1
-                                            │ *
-                     ┌──────────────────────┴──────────────────────┐
-                     │      MOVIMENTO (DDT interno)               │
-                     │ id, tenant_id, ordine_id, tipo (uscita/     │
-                     │ ingresso), numero, anno,                    │
-                     │ data_movimento, stato (bozza/confermato),   │
-                     │ firma_consegna?, firma_ritiro?,             │
-                     │ created_by, created_at, updated_at          │
-                     └───────────────────────┬─────────────────────┘
-                                             │ 1
-                                             │ *
-                    ┌────────────────────────┴─────────────────────┐
-                    │         MOVIMENTO_RIGA                       │
-                    │ id, movimento_id, ordine_riga_id,            │
-                    │ prodotto_id, quantita,                       │
-                    │ stato_destinazione (in_noleggio/reso/        │
-                    │ danneggiato), quantita_danneggiata, note     │
-                    └─────────────────────────────────────────────┘
+                      │ 1
+                      │ *
+                      ┌──────────────────────┴──────────────────────────┐
+                      │      DDT (Documento di Trasporto)              │
+                      │ id, tenant_id, ordine_id, tipo (uscita/        │
+                      │ ingresso), numero, anno,                       │
+                      │ data_movimento, data_trasporto,                │
+                      │ vettore?, targa?, causale_trasporto,           │
+                      │ firma_consegna?, firma_ritiro?,                │
+                      │ stato (bozza/confermato/annullato),            │
+                      │ pdf_url, created_by, created_at, updated_at    │
+                      └───────────────────────┬────────────────────────┘
+                                              │ 1
+                                              │ *
+                     ┌────────────────────────┴────────────────────────┐
+                     │         DDT_RIGA                                │
+                     │ id, ddt_id, ordine_riga_id, prodotto_id,       │
+                     │ quantita_caricata, quantita_scaricata,          │
+                     │ condizione (ottimo/buono/danneggiato/          │
+                     │ danneggiato_parziale), quantita_danneggiata,    │
+                     │ note                                           │
+                     └─────────────────────────────────────────────────┘
+
+                      │ 1
+                      │ *
+             ┌────────┴─────────────────────────────────────────────┐
+             │               FATTURA                                │
+             │ id, tenant_id, ordine_id, tipo (fattura/             │
+             │ nota_credito/ricevuta), numero, anno,                │
+             │ data_emissione, data_scadenza,                       │
+             │ imponibile, aliquota_iva, importo_iva, totale,      │
+             │ ritenuta_acconto?, stato (bozza/emessa/             │
+             │ annullata), xml_url?, pdf_url,                      │
+             │ codice_destinatario, pec_destinatario,               │
+             │ created_by, created_at, updated_at                   │
+             └──────────────────────────────────────────────────────┘
+                      │ 1
+                      │ *
+             ┌────────┴─────────────────────────────────────────────┐
+             │            FATTURA_RIGA                              │
+             │ id, fattura_id, ddt_riga_id, prodotto_id,           │
+             │ quantita, prezzo_unitario, aliquota_iva,            │
+             │ totale_riga                                         │
+             └──────────────────────────────────────────────────────┘
+
+                      │ 1
+                      │ *
+             ┌────────┴─────────────────────────────────────────────┐
+             │            PAGAMENTO                                 │
+             │ id, ordine_id, tipo (bonifico/assegno/contanti/     │
+             │ carta/rid), data_scadenza, data_incasso?,           │
+             │ importo, stato (da_incassare/incassato/parziale/    │
+             │ scaduto), nota, created_at, updated_at              │
+             └──────────────────────────────────────────────────────┘
 ```
 
 ### 3.2 Dettaglio Tabelle Principali
@@ -255,15 +357,54 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
 - `nome` VARCHAR(255)
 - `descrizione` TEXT
 - `quantita_totale` INTEGER (giacenza totale di magazzino)
+- `quantita_indisponibile` INTEGER DEFAULT 0 (rotti/manutenzione)
 - `prezzo_giorno` DECIMAL(10,2) (prezzo noleggio per 1 giorno)
 - `prezzo_forfettario` DECIMAL(10,2) (prezzo forfettario per periodo)
 - `prezzo_3gg` DECIMAL(10,2) (prezzo per 3 giorni)
 - `prezzo_settimana` DECIMAL(10,2) (prezzo settimanale)
 - `unita_misura` VARCHAR(20) DEFAULT 'pezzi'
+- `peso_kg` DECIMAL(8,2) (per calcolo volumi e logistica)
+- `dimensioni` VARCHAR(100) (es. "50×50×80 cm")
+- `volume_m3` DECIMAL(8,3) (calcolato: L×P×H in m³)
+- `fornitore_nome` VARCHAR(255)
+- `fornitore_contatto` TEXT
+- `data_acquisto` DATE
+- `costo_acquisto` DECIMAL(10,2)
 - `immagine_url` TEXT
+- `immagini_galleria` JSON (array URL immagini extra)
+- `composito` BOOLEAN DEFAULT false
 - `attivo` BOOLEAN DEFAULT true
 - `note` TEXT
+- `positione_magazzino` VARCHAR(100) (scaffale/corsia/piano)
 - `created_at`, `updated_at`
+
+#### 3.2.4a prodotto_composito_riga (per prodotti composti)
+- `id` UUID PK
+- `prodotto_composito_id` UUID FK → prodotto (il prodotto composito principale)
+- `prodotto_singolo_id` UUID FK → prodotto (il sotto-articolo)
+- `quantita` INTEGER (es. 2 cavalletti per bancone)
+- `note` TEXT
+- `created_at`, `updated_at`
+
+#### 3.2.4b contenitore (casse, ceste, palette, carrelli)
+- `id` UUID PK
+- `tenant_id` UUID FK → tenant
+- `codice` VARCHAR(50)
+- `tipo` ENUM('cassa', 'cesta', 'baule', 'pallet', 'carrello')
+- `descrizione` TEXT
+- `dimensioni_esterne` VARCHAR(100) (es. "120×80×100 cm")
+- `peso_vuoto_kg` DECIMAL(8,2)
+- `portata_kg` DECIMAL(8,2)
+- `volume_utile_m3` DECIMAL(8,3)
+- `attivo` BOOLEAN DEFAULT true
+- `created_at`, `updated_at`
+
+#### 3.2.4c prodotto_contenitore (associazione contenitori usati per un prodotto)
+- `id` UUID PK
+- `prodotto_id` UUID FK → prodotto
+- `contenitore_id` UUID FK → contenitore
+- `quantita_per_contenitore` INTEGER (es. 20 sedie per cassa)
+- `note` TEXT
 
 #### 3.2.5 cliente
 - `id` UUID PK
@@ -299,6 +440,8 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
 - `subtotale` DECIMAL(10,2)
 - `sconto_pct` DECIMAL(5,2) DEFAULT 0
 - `sconto_importo` DECIMAL(10,2) DEFAULT 0
+- `totale_imponibile` DECIMAL(10,2)
+- `totale_iva` DECIMAL(10,2)
 - `totale` DECIMAL(10,2)
 - `note` TEXT (visibili al cliente)
 - `note_interne` TEXT
@@ -311,9 +454,11 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
 - `prodotto_id` UUID FK → prodotto
 - `quantita` INTEGER
 - `prezzo_unitario` DECIMAL(10,2)
+- `prezzo_manuale` BOOLEAN DEFAULT false (override manuale del prezzo)
 - `tipo_prezzo` ENUM('giorno', 'forfait', 'durata')
 - `sconto_pct` DECIMAL(5,2) DEFAULT 0
 - `sconto_importo` DECIMAL(10,2) DEFAULT 0
+- `aliquota_iva` DECIMAL(5,2) DEFAULT 22.00 (percentuale — 22, 10, 4, 0 per esenti)
 - `totale_riga` DECIMAL(10,2)
 - `note` TEXT
 - `created_at`
@@ -340,6 +485,8 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
 - `subtotale` DECIMAL(10,2)
 - `sconto_pct` DECIMAL(5,2) DEFAULT 0
 - `sconto_importo` DECIMAL(10,2) DEFAULT 0
+- `totale_imponibile` DECIMAL(10,2)
+- `totale_iva` DECIMAL(10,2)
 - `totale` DECIMAL(10,2)
 - `note` TEXT
 - `note_logistiche` TEXT
@@ -352,26 +499,131 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
 - `prodotto_id` UUID FK → prodotto
 - `quantita` INTEGER
 - `prezzo_unitario` DECIMAL(10,2)
+- `prezzo_manuale` BOOLEAN DEFAULT false (override manuale del prezzo)
 - `tipo_prezzo` ENUM('giorno', 'forfait', 'durata')
 - `sconto_pct` DECIMAL(5,2) DEFAULT 0
 - `sconto_importo` DECIMAL(10,2) DEFAULT 0
+- `aliquota_iva` DECIMAL(5,2) DEFAULT 22.00 (percentuale — 22, 10, 4, 0 per esenti)
 - `totale_riga` DECIMAL(10,2)
 - `note` TEXT
 - `created_at`
 
-#### 3.2.10 movimento (DDT interno)
+#### 3.2.10 ddt (Documento di Trasporto)
 - `id` UUID PK
 - `tenant_id` UUID FK → tenant
 - `ordine_id` UUID FK → ordine
 - `tipo` ENUM('uscita', 'ingresso')
 - `numero` INTEGER (progressivo annuale per tenant, indipendente per tipo)
 - `anno` INTEGER
-- `data_movimento` TIMESTAMP
-- `stato` ENUM('bozza', 'confermato')
+- `data_movimento` DATE
+- `data_trasporto` DATE
+- `vettore` VARCHAR(255) (nome corriere/trasportatore)
+- `targa` VARCHAR(20) (targa mezzo, opzionale)
+- `causale_trasporto` VARCHAR(255) (es. "Noleggio per evento Matrimonio Verdi")
 - `firma_consegna` TEXT (base64 PNG, opzionale)
 - `firma_ritiro` TEXT (base64 PNG, opzionale)
+- `materiali_lasciati` TEXT (imballi/accessori/carrellini lasciati al cliente)
+- `stato` ENUM('bozza', 'confermato', 'annullato')
+- `pdf_url` TEXT (URL al PDF generato)
 - `created_by` UUID FK → user
 - `created_at`, `updated_at`
+
+#### 3.2.10a ddt_riga
+- `id` UUID PK
+- `ddt_id` UUID FK → ddt
+- `ordine_riga_id` UUID FK → ordine_riga
+- `prodotto_id` UUID FK → prodotto
+- `quantita_caricata` INTEGER (in uscita o rientro)
+- `quantita_scaricata` INTEGER (solo in rientro, può differire)
+- `condizione` ENUM('ottimo', 'buono', 'danneggiato', 'danneggiato_parziale') DEFAULT 'ottimo'
+- `quantita_danneggiata` INTEGER DEFAULT 0
+- `note` TEXT
+
+#### 3.2.11 fattura
+- `id` UUID PK
+- `tenant_id` UUID FK → tenant
+- `ordine_id` UUID FK → ordine
+- `tipo` ENUM('fattura', 'nota_credito', 'ricevuta')
+- `numero` INTEGER (progressivo annuale per tenant)
+- `anno` INTEGER
+- `data_emissione` DATE
+- `data_scadenza` DATE
+- `imponibile` DECIMAL(10,2)
+- `aliquota_iva` DECIMAL(5,2) DEFAULT 22.00
+- `importo_iva` DECIMAL(10,2)
+- `ritenuta_acconto` DECIMAL(10,2) DEFAULT 0
+- `totale` DECIMAL(10,2)
+- `stato` ENUM('bozza', 'emessa', 'annullata')
+- `codice_destinatario` VARCHAR(7) (SDI per fattura elettronica)
+- `pec_destinatario` VARCHAR(255)
+- `xml_url` TEXT (URL al file XML fattura elettronica)
+- `pdf_url` TEXT (URL al PDF)
+- `created_by` UUID FK → user
+- `esportata_gestionale` BOOLEAN DEFAULT false (true quando inviata al gestionale esterno)
+- `data_esportazione` TIMESTAMP
+- `created_at`, `updated_at`
+
+#### 3.2.11a fattura_riga
+- `id` UUID PK
+- `fattura_id` UUID FK → fattura
+- `ddt_riga_id` UUID FK → ddt_riga (riferimento al DDT di origine)
+- `prodotto_id` UUID FK → prodotto
+- `quantita` INTEGER
+- `prezzo_unitario` DECIMAL(10,2)
+- `aliquota_iva` DECIMAL(5,2) DEFAULT 22.00
+- `totale_riga` DECIMAL(10,2)
+
+#### 3.2.12 pagamento
+- `id` UUID PK
+- `ordine_id` UUID FK → ordine
+- `tipo` ENUM('bonifico', 'assegno', 'contanti', 'carta', 'rid')
+- `data_scadenza` DATE
+- `data_incasso` DATE (NULLABLE se non ancora incassato)
+- `importo` DECIMAL(10,2)
+- `stato` ENUM('da_incassare', 'incassato', 'parziale', 'scaduto')
+- `nota` TEXT
+- `created_at`, `updated_at`
+
+#### 3.2.13 documento_logistico
+- `id` UUID PK
+- `ordine_id` UUID FK → ordine
+- `consegna_ztl` BOOLEAN DEFAULT false
+- `ztl_orari` VARCHAR(255) (es. "Lun-Ven 7:30-9:30, 11:00-13:00")
+- `area_c` BOOLEAN DEFAULT false
+- `mulino_in_sede` BOOLEAN DEFAULT false
+- `personale_carico_scarico` BOOLEAN DEFAULT false
+- `n_persone_necessarie` INTEGER
+- `piano_consegna` VARCHAR(50) (es. "piano terra", "1° piano con ascensore")
+- `ascensore_presente` BOOLEAN DEFAULT false
+- `dimensioni_ascensore` VARCHAR(100)
+- `note_trasportatore` TEXT
+- `percorso_consigliato` TEXT
+- `pdf_url` TEXT (PDF esportabile)
+- `created_at`, `updated_at`
+
+#### 3.2.14 ordine_foto
+- `id` UUID PK
+- `ordine_id` UUID FK → ordine
+- `url` TEXT
+- `caption` VARCHAR(255)
+- `tipo` ENUM('allestimento', 'particolare', 'danno')
+- `created_by` UUID FK → user
+- `created_at`
+
+#### 3.2.15 ordine_questionario
+- `id` UUID PK
+- `ordine_id` UUID FK → ordine UNIQUE
+- `qualita_stelle` INTEGER CHECK (1-5)
+- `venue_adatto` BOOLEAN
+- `adattabilita_venue` TEXT
+- `accesso_carico` TEXT
+- `puntualita_consegna` INTEGER CHECK (1-5)
+- `danni_riscontrati` TEXT
+- `feedback_cliente` TEXT
+- `miglioramenti_suggeriti` TEXT
+- `tag_ai` TEXT[] (array di tag per training AI)
+- `compilato_da` UUID FK → user
+- `compilato_il` TIMESTAMP
 
 #### 3.2.11 movimento_riga
 - `id` UUID PK
@@ -1445,37 +1697,102 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 
 ---
 
-## 11. Piano di Sviluppo
+## 11. Funzionalità Richieste dal Cliente (emerse dalla review prototipo)
 
-### 11.1 Fasi
+### 11.1 Preventivi — Integrazioni richieste
+
+| Funzionalità | Stato attuale | Modifica necessaria |
+|---|---|---|
+| **Logistica nel preventivo** | Non presente | Nuovo Step 2b: casse/ceste/pallet, calcolo volume, form vincoli consegna (ZTL, orari, muletti) |
+| **Modifica manuale importi** | Parziale (sconto %) | Checkbox "Prezzo manuale" per riga → sblocca input e disabilita calcolo automatico |
+| **Modifica immagini prodotto** | Non permessa | Le immagini sono dell'anagrafica prodotto, modificabili solo in anagrafica (non in fase di preventivo) |
+| **Prodotti composti** | Non gestito | Nuovo tipo `composito`: articolo padre con sotto-righe (es. Bancone Pallet = piano legno + cavalletti × 2). In preventivo si espande con proprie qtà e disponibilità |
+| **Note ai singoli prodotti** | Non presente | Campo `note` testuale per ogni riga ordine, visibile in tabella e riepilogo stampabile |
+| **Sconto per riga** | Già presente (%) | Aggiungere anche sconto in **importo fisso** oltre alla percentuale |
+| **Sconto globale** | Già presente | Nessuna modifica |
+| **IVA / non IVA** | Non gestito | Nuova colonna "Aliquota IVA" per riga (22%, 10%, 4%, 0% esente). Subtotale imponibile + IVA + totale nel riepilogo |
+| **Pagamenti e storico** | Non presente | Nuova sezione Pagamenti nell'ordine + storico pagamenti nell'anagrafica cliente |
+| **Generazione DDT/Fattura** | Non presente | Pulsanti "Genera DDT" e "Genera Fattura" nell'ordine. Il sistema è autore dei documenti (vedi §2.4) |
+
+### 11.2 Catalogo Prodotti — Integrazioni richieste
+
+| Funzionalità | Stato attuale | Modifica necessaria |
+|---|---|---|
+| **Anagrafica dettagliata** | Parziale | Nuova scheda "Anagrafica" nel dettaglio prodotto: fornitore (nome, contatti, data acquisto, costo acquisto), posizione magazzino, note logistiche |
+| **Tabella entrate/uscite per evento** | Non presente | Nuova tab "Movimenti": tabella cronologica con evento/qta/tipo (DDT uscita/rientro/acquisto/manutenzione), saldo progressivo stile Excel |
+
+### 11.3 Logistica — Nuove funzionalità
+
+| Funzionalità | Descrizione |
+|---|---|
+| **Casse / Ceste / Pallet** | Nuova anagrafica "Contenitori": codice, tipo (cassa/cesto/baule/pallet/carrello), dimensioni, peso, portata. Associabili ai prodotti in fase di preventivo |
+| **Calcolo volumi** | Ogni articolo ha dimensioni (L×P×H cm) e peso. Il preventivo calcola automaticamente volume totale = Σ(qtà × volume_unitario) e peso totale |
+| **Documento logistico** | Form da compilare nell'ordine: ZTL (orari), Area C, muletti, personale carico/scarico, piano consegna, ascensore, note trasportatore. PDF esportabile |
+
+### 11.4 Offerta / Carrello Sito
+
+| Funzionalità | Descrizione |
+|---|---|
+| **Volume totale spedizione** | Mostrato nel riepilogo preventivo e nella stampa PDF |
+| **Codice univoco da carrello sito** | Nuova pagina "Offerte da Sito": lista preventivi generati da carrello web con codice univoco identificativo. Da qui si apre il wizard preventivo precompilato con i dati del carrello |
+
+### 11.5 Note Operative
+
+| Funzionalità | Descrizione |
+|---|---|
+| **Materiali lasciati al cliente** | Nuovo campo "Materiali lasciati in sede" nella sezione DDT: imballi, accessori, carrellini, quantità, data previsto rientro |
+| **Foto allestimento** | Già presente nella modale ordine. Estendere con upload e cattura da dispositivo mobile |
+| **Questionario AI** | Già presente nella modale ordine. I dati raccolti alimentano il calcolo impegnato probabile |
+
+### 11.6 Priorità Implementazione
+
+| Priorità | Funzionalità | Fase |
+|---|---|---|
+| P0 | Logistica (Step 2b + Volume) | Step successivo al prototipo |
+| P0 | IVA / esenzione per riga | Step successivo al prototipo |
+| P0 | Sconto importo fisso per riga | Step successivo al prototipo |
+| P1 | Prodotti composti (anagrafica + espansione) | Fase 1 |
+| P1 | Pagamenti e storico | Fase 1 |
+| P1 | Anagrafica dettagliata + Movimenti catalogo | Fase 1 |
+| P2 | Documento logistico PDF | Fase 2 |
+| P2 | DDT/Fattura (generazione documenti) | Fase 2 |
+| P2 | Note operative materiali lasciati | Fase 2 |
+| P3 | Codice univoco carrello sito → offerta | Fase 3 |
+
+---
+
+## 12. Piano di Sviluppo
+
+### 12.1 Fasi
 
 | Fase | Durata | Attività |
 |---|---|---|
 | **Fase 0 — Setup** | 1 settimana | Setup repo, ambiente dev (Docker), CI/CD base, scheletro frontend/backend, Prisma schema, migrazioni DB |
-| **Fase 1 — Core** | 3 settimane | Auth + ruoli, CRUD clienti, CRUD catalogo (categorie + prodotti) |
-| **Fase 2 — Noleggio** | 3 settimane | Preventivi (CRUD + wizard + PDF), Ordini (trasformazione + CRUD), gestione sconti |
-| **Fase 3 — Movimenti** | 2 settimane | DDT (uscita/ingresso), cambio stato articoli, calendario disponibilità |
-| **Fase 4 — Dashboard** | 1 settimana | KPI, report, vista solleciti, integrazione calendario in dashboard |
+| **Fase 1 — Core** | 3 settimane | Auth + ruoli, CRUD clienti, CRUD catalogo (categorie + prodotti + anagrafica + compositi + contenitori) |
+| **Fase 2 — Preventivi** | 3 settimane | Wizard completo (Step 1-2-2b-3), IVA, sconti per riga/globali, override prezzo, note riga, PDF |
+| **Fase 3 — Ordini e DDT** | 3 settimane | Trasformazione preventivo→ordine, DDT uscita/ingresso, fattura, pagamenti, materiali lasciati, documento logistico |
+| **Fase 4 — Dashboard** | 1 settimana | KPI, report, Gantt eventi, vista solleciti |
 | **Fase 5 — Gestionale** | 2 settimane | Integrazione API gestionale (adapter pattern), sincronizzazione, log |
 | **Fase 6 — Rifiniture** | 1 settimana | Testing E2E, responsive design, performance tuning, deploy VPS |
-| **Totale** | **13 settimane** | |
+| **Totale** | **14 settimane** | |
 
-### 11.2 Milestone
+### 12.2 Milestone
 
 | # | Milestone | Criterio |
 |---|---|---|
 | M0 | Prototipo UI | Prototipo HTML interattivo con 8 schermate, Gantt, dati reali (✅ completato) |
 | M1 | Setup completato | Frontend e backend in esecuzione in dev, DB migrato |
-| M2 | Catalogo e clienti | CRUD completo clienti e prodotti con UI |
-| M3 | Preventivi e ordini | Wizard preventivo funzionante, trasformazione in ordine |
-| M4 | Movimenti | DDT uscita/ingresso confermano e cambiano stato articoli |
-| M5 | Calendario eventi e dashboard | Vista eventi Gantt aggiornata, KPI corretti |
-| M6 | Integrazione | Sync con gestionale funzionante (end-to-end) |
-| M7 | Go-live | Deploy su VPS, test utente, documentazione |
+| M2 | Catalogo e clienti | CRUD completo clienti, prodotti, categorie, compositi, contenitori |
+| M3 | Preventivi | Wizard preventivo completo con IVA, sconti, logistica, PDF stampabile |
+| M4 | Ordini e DDT | Trasformazione ordine, DDT uscita/ingresso, cambio stato articoli |
+| M5 | Fatture e pagamenti | Generazione fattura/nota credito, tracciamento pagamenti |
+| M6 | Dashboard e calendario | Vista eventi Gantt aggiornata, KPI corretti, solleciti |
+| M7 | Integrazione gestionale | Sync fatture, movimenti e anagrafiche con gestionale esterno |
+| M8 | Go-live | Deploy su VPS, test utente, documentazione |
 
 ---
 
-## 12. Requisiti Non Funzionali
+## 13. Requisiti Non Funzionali
 
 | Requisito | Specifica |
 |---|---|
@@ -1488,19 +1805,19 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 
 ---
 
-## 13. Note Finali
+## 14. Note Finali
 
 - La specifica è **viva** e potrà essere raffinata durante lo sviluppo
 - Le API del gestionale, quando definite, determineranno l'implementazione esatta del modulo di integrazione
-- Il design UI/UX è stato validato tramite prototipo HTML interattivo (vedi sezione 14)
+- Il design UI/UX è stato validato tramite prototipo HTML interattivo (vedi sezione 15)
 - L'architettura multi-tenant-ready permette di ospitare più società dello stesso gruppo su una singola istanza
 - I PDF (preventivi, ordini, DDT) seguiranno il template grafico del brand aziendale
 
 ---
 
-## 14. Prototipo Realizzato
+## 15. Prototipo Realizzato
 
-### 14.1 File e Struttura
+### 15.1 File e Struttura
 
 | File | Descrizione |
 |---|---|
@@ -1511,7 +1828,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 
 **Parametri URL supportati:** `app.html?page=dashboard` | `catalogo` | `dettaglio-prodotto` | `calendario` | `preventivi` | `ordini` | `ddt` | `clienti`
 
-### 14.2 Stack Prototipo
+### 15.2 Stack Prototipo
 
 | Componente | Tecnologia |
 |---|---|
@@ -1522,7 +1839,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | Gantt | Engine JavaScript puro: costruzione dinamica DOM, drag-to-pan, scroll-by, scroll-to-commit, sparkline |
 | Design system | CSS custom properties (`:root` tokens) con palette OKLch |
 
-### 14.3 Design System Applicato
+### 15.3 Design System Applicato
 
 | Token | Valore | Uso |
 |---|---|---|
@@ -1559,7 +1876,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 - `.om-photos-grid` / `.om-photo-thumb` / `.om-photo-upload` / `.om-photo-zoom-overlay`
 - `.om-ai-section` / `.om-ai-header` / `.om-ai-grid` / `.om-ai-field` / `.om-ai-stars`
 
-### 14.4 Mappa Schermate
+### 15.4 Mappa Schermate
 
 | # | Schermata | ID pagina | Riga sidebar | File prototype (righe) |
 |---|---|---|---|---|
@@ -1572,7 +1889,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | 7 | DDT / Movimenti | `page-ddt` | Operativo → DDT / Movimenti | `:1038-1055` |
 | 8 | Clienti | `page-clienti` | Anagrafiche → Clienti | `:1058-1077` |
 
-### 14.5 Dati Demo
+### 15.5 Dati Demo
 
 Il prototipo contiene dati realistici estratti da oltreilgiardino.biz:
 
@@ -1587,7 +1904,7 @@ Il prototipo contiene dati realistici estratti da oltreilgiardino.biz:
 | Impegni Gantt | 6 | Su 22 giorni (15 Giu → 6 Lug), con 4 stati |
 | Immagini | 33 | 13 categorie + 15 prodotti + 2 hero + 1 logo + 2 grafiche |
 
-### 14.6 Note per Sviluppo
+### 15.6 Note per Sviluppo
 
 **Cosa funziona nel prototipo:**
 - Navigazione SPA completa tra 8 pagine + modale dettaglio ordine
@@ -1622,7 +1939,7 @@ Il prototipo contiene dati realistici estratti da oltreilgiardino.biz:
 
 ---
 
-## 15. Note Demo
+## 16. Note Demo
 
 Il prototipo include un **footer** in tutte le pagine (index e app) con:
 - Nota "Demo dimostrativa" con avviso che i dati sono fittizi e alcune funzionalità potrebbero non essere operative
@@ -1632,4 +1949,4 @@ Nell'index il footer è in fondo alla pagina dopo la griglia di card. Nell'app �
 
 ---
 
-*Documento generato il 24/06/2026 — Specifica Tecnica v1.9 — Prototipo Gestione Noleggi Oltre Il Giardino SRL*
+*Documento generato il 24/06/2026 — Specifica Tecnica v2.0 — Prototipo Gestione Noleggi Oltre Il Giardino SRL*

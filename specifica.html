@@ -31,6 +31,32 @@
     }
 
     /* ── TOC sidebar ── */
+    /* ── Export toolbar ── */
+    .export-bar {
+      position: fixed; top: 0; right: 0; z-index: 40;
+      display: flex; gap: 6px; padding: 10px 16px;
+      background: color-mix(in oklch, var(--bg) 92%, transparent);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      border-left: 1px solid var(--border);
+      border-radius: 0 0 0 8px;
+    }
+    .export-bar button {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--fg);
+      font-family: var(--font-body); font-size: 12px; cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+      white-space: nowrap;
+    }
+    .export-bar button:hover { border-color: var(--accent); color: var(--accent); }
+    .export-bar button.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+    .export-bar button.primary:hover { background: color-mix(in oklch, var(--accent) 85%, black); }
+
+    @media (max-width: 900px) {
+      .export-bar { position: static; justify-content: center; border-radius: 0; border-left: none; flex-wrap: wrap; }
+    }
+
     .toc {
       position: fixed; top: 0; left: 0; bottom: 0;
       width: var(--toc-w);
@@ -187,6 +213,22 @@
     .back-top.visible { opacity: 1; pointer-events: auto; }
     .back-top:hover { transform: translateY(-2px); }
 
+    /* ── Print styles ── */
+    @media print {
+      .toc, .export-bar, .back-top { display: none !important; }
+      .main { margin-left: 0 !important; padding: 0 !important; max-width: none !important; }
+      body { font-size: 11pt; line-height: 1.4; }
+      .md h1 { font-size: 20pt; margin: 0 0 4px; }
+      .md h2 { font-size: 16pt; margin: 24px 0 8px; }
+      .md h3 { font-size: 13pt; }
+      .md pre { break-inside: avoid; font-size: 9pt; padding: 8px 12px; }
+      .md table { font-size: 10pt; break-inside: avoid; }
+      .md blockquote { break-inside: avoid; }
+      .md img { max-width: 60% !important; }
+      a { text-decoration: none !important; color: inherit !important; }
+      @page { margin: 20mm 15mm; }
+    }
+
     /* ── Responsive ── */
     @media (max-width: 900px) {
       .toc { display: none; }
@@ -200,10 +242,16 @@
     <a href="index.html" class="toc-back">← Indice</a>
     <div class="toc-header">
       <h2>Specifica Tecnica</h2>
-      <div class="sub">v1.9 — 24/06/2026</div>
+      <div class="sub">v2.0 — 24/06/2026</div>
     </div>
     <div id="toc-list"></div>
   </nav>
+
+  <div class="export-bar">
+    <button onclick="window.print()">🖨️ Stampa / PDF</button>
+    <button onclick="downloadMarkdown()">📄 Scarica Markdown</button>
+    <button onclick="downloadHTML()" class="primary">💾 Scarica HTML</button>
+  </div>
 
   <article class="main md" id="content">
     <div id="loading" style="text-align:center;padding:80px 0;color:var(--muted);font-family:var(--font-mono);font-size:13px;">Caricamento specifica…</div>
@@ -215,10 +263,10 @@
   <script>
     const md = `# Specifica Tecnica — Prototipo Gestione Noleggi Oltre Il Giardino SRL
 
-> **Versione:** 1.9
+> **Versione:** 2.0
 > **Data:** 24/06/2026
-> **Stato:** Prototipo completato
-> **Prossimo passo:** Validazione prototipo → Sviluppo Fase 0
+> **Stato:** Specifica aggiornata v2.0
+> **Prossimo passo:** Validazione prototipo → Sviluppo Fase 1
 
 ---
 
@@ -1382,7 +1430,7 @@ Il prototipo include un **footer** in tutte le pagine con nota "Demo dimostrativ
 
 ---
 
-*Documento generato il 24/06/2026 — Specifica Tecnica v1.9 — Prototipo Gestione Noleggi Oltre Il Giardino SRL*`;
+*Documento generato il 24/06/2026 — Specifica Tecnica v2.0 — Prototipo Gestione Noleggi Oltre Il Giardino SRL*`;
 
     // Parse and render
     document.getElementById('loading').remove();
@@ -1418,6 +1466,40 @@ Il prototipo include un **footer** in tutte le pagine con nota "Demo dimostrativ
     window.addEventListener('scroll', () => {
       btn.classList.toggle('visible', window.scrollY > 400);
     });
+
+    // ── Export functions ──
+
+    function downloadMarkdown() {
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'specifica-tecnica-v2.0.md';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadHTML() {
+      const title = document.querySelector('.toc-header h2')?.textContent || 'Specifica';
+      const fullDoc = '<!doctype html>\n<html lang="it">\n<head>\n<meta charset="utf-8">\n' +
+        '<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
+        '<title>' + title + '</title>\n' +
+        '<style>\n' + Array.from(document.styleSheets)
+          .flatMap(s => { try { return Array.from(s.cssRules || []).map(r => r.cssText); } catch(e) { return []; } })
+          .join('\n') +
+        '\n.md { max-width:800px; margin:0 auto; padding:24px; }\n' +
+        '.toc, .export-bar, .back-top { display:none !important; }\n' +
+        '</style>\n</head>\n<body>\n<article class="main md">\n' +
+        document.getElementById('content').innerHTML +
+        '\n</article>\n</body>\n</html>';
+      const blob = new Blob([fullDoc], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'specifica-tecnica-v2.0.html';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   </script>
 </body>
 </html>
