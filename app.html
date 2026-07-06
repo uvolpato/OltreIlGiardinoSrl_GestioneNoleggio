@@ -1692,30 +1692,46 @@
       margin-left: 6px; letter-spacing: 0.05em; text-transform: uppercase;
     }
 
-    /* ── PD Gantt ── */
-    .gantt-timeline { display: flex; height: 42px; position: relative; }
-    .gantt-timeline .gt-day {
+    /* ── PD Gantt (grid style, like dashboard) ── */
+    .pdg-wrap { display: flex; flex-direction: column; }
+    .pdg-header { display: flex; border-bottom: 1px solid var(--border); }
+    .pdg-header .pdg-day {
       width: 42px; flex-shrink: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 0;
-      border-right: 1px solid var(--border);
+      align-items: center; justify-content: center; gap: 1px;
+      border-right: 1px solid var(--border); padding: 6px 0;
       font-size: 10px; line-height: 1.2; cursor: default;
     }
-    .gantt-timeline .gt-day.gt-weekend { background: color-mix(in oklch, var(--border) 30%, transparent); }
-    .gantt-timeline .gt-day.gt-today { background: var(--accent-soft); font-weight: 700; }
-    .gantt-timeline .gt-weekend .gt-dow { color: var(--muted); }
-    .gantt-timeline .gt-dow { font-family: var(--font-mono); font-size: 8px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
-    .gantt-timeline .gt-num { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--fg); }
-    .gt-today-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--warn); z-index: 5; pointer-events: none; }
-    .gt-today-label { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--warn); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
-    .gt-bar {
-      position: absolute; height: 22px; border-radius: 4px; top: 2px;
+    .pdg-header .pdg-day:last-child { border-right: none; }
+    .pdg-header .pdg-day.weekend { background: color-mix(in oklch, var(--fg) 3%, transparent); }
+    .pdg-header .pdg-day.today-col { background: var(--accent-soft); font-weight: 700; }
+    .pdg-header .pdg-day.today-col .pdg-num { color: var(--accent); }
+    .pdg-header .pdg-dow { font-family: var(--font-mono); font-size: 8px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
+    .pdg-header .pdg-num { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--fg); }
+    .pdg-rows { position: relative; }
+    .pdg-row { display: flex; position: relative; border-bottom: 1px solid var(--border); height: 36px; }
+    .pdg-row:last-child { border-bottom: none; }
+    .pdg-row:hover { background: transparent; }
+    .pdg-row .pdg-cell {
+      width: 42px; flex-shrink: 0; border-right: 1px solid var(--border);
+      height: 100%; transition: background 0.1s;
+    }
+    .pdg-row .pdg-cell:last-child { border-right: none; }
+    .pdg-row .pdg-cell.weekend { background: color-mix(in oklch, var(--fg) 3%, transparent); }
+    .pdg-row .pdg-cell.today-col { background: var(--accent-soft); }
+    .pdg-row:hover .pdg-cell { background: var(--fg-soft); }
+    .pdg-row:hover .pdg-cell.weekend { background: color-mix(in oklch, var(--fg) 8%, transparent); }
+    .pdg-row:hover .pdg-cell.today-col { background: var(--accent-soft); }
+    .pdg-bar {
+      position: absolute; height: 24px; border-radius: 4px; top: 6px;
       display: flex; align-items: center; justify-content: center;
       font-family: var(--font-mono); font-size: 10px; font-weight: 700;
       color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
       pointer-events: auto; cursor: pointer; z-index: 3;
-      overflow: hidden; white-space: nowrap; padding: 0 4px;
+      overflow: hidden; white-space: nowrap; padding: 0 6px;
     }
-    .gt-bars { position: absolute; top: 42px; left: 0; right: 0; bottom: 0; pointer-events: none; background-image: repeating-linear-gradient(to right, transparent 0px, transparent 41px, var(--border) 41px, var(--border) 42px); }
+    .pdg-bar:hover { filter: brightness(1.1); z-index: 4; }
+    .pdg-today-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--warn); z-index: 5; pointer-events: none; }
+    .pdg-today-label { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--warn); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -2867,10 +2883,7 @@
               </div>
             </div>
             <div class="gantt-viewport" id="pd-gantt-viewport">
-              <div class="gantt" id="pd-gantt-grid" style="--day-w:42px;">
-                <div class="gantt-label-col" id="pd-gantt-labels"></div>
-                <div class="gantt-timeline" id="pd-gantt-timeline"></div>
-              </div>
+              <div class="pdg-wrap" id="pd-gantt-grid"></div>
             </div>
           </div>
           <div class="gantt-legend">
@@ -4609,7 +4622,7 @@
       document.getElementById('pd-modal-gallery-grid').innerHTML = galHtml;
 
       // gantt — build
-      pdBuildGantt(item, dateRange);
+      pdBuildGantt(item);
 
       // anagrafica
       var anagHtml = '';
@@ -4676,7 +4689,7 @@
         p.classList.toggle('active', i === tabs[tab]);
       });
       if (tab === 'gantt' && pdCatalogIdx >= 0) {
-        pdBuildGantt(QUOTE_CATALOG[pdCatalogIdx], quoteGetEventDateRange());
+        pdBuildGantt(QUOTE_CATALOG[pdCatalogIdx]);
       }
     }
 
@@ -4717,94 +4730,106 @@
       }
     }
 
-    // ── PD Modal Gantt ──
+    // ── PD Modal Gantt (grid style, like dashboard) ──
     var pdGanttStart = new Date(2026, 5, 15);
     var pdGanttEnd = new Date(2026, 6, 6);
+    var PDG_DAY_W = 42;
 
-    function pdBuildGantt(item, dateRange) {
-      var vp = document.getElementById('pd-gantt-viewport');
-      var tl = document.getElementById('pd-gantt-timeline');
-      var lbl = document.getElementById('pd-gantt-labels');
-      if (!tl || !lbl) return;
+    function pdBuildGantt(item) {
+      var grid = document.getElementById('pd-gantt-grid');
+      if (!grid) return;
 
       var start = new Date(pdGanttStart);
       var end = new Date(pdGanttEnd);
       var days = [];
-      for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        days.push(new Date(d));
-      }
+      var d = new Date(start);
+      while (d <= end) { days.push(new Date(d)); d = new Date(d.getTime() + DAY_MS); }
+
       // range label
       document.getElementById('pd-gantt-range-label').textContent =
         days[0].getDate() + ' ' + MONTH_IT[days[0].getMonth()] + ' — ' +
         days[days.length - 1].getDate() + ' ' + MONTH_IT[days[days.length - 1].getMonth()] + ' 2026';
 
-      // timeline header
-      var tlHtml = '';
+      /* ── Header row: day columns ── */
+      var headerHtml = '<div class="pdg-header">';
       days.forEach(function(day) {
         var isWeekend = day.getDay() === 0 || day.getDay() === 6;
-        var isToday = day.getDate() === TODAY.getDate() && day.getMonth() === TODAY.getMonth();
-        tlHtml += '<div class="gt-day' + (isWeekend ? ' gt-weekend' : '') + (isToday ? ' gt-today' : '') + '"><span class="gt-dow">' + DOW_IT[day.getDay()] + '</span><span class="gt-num">' + day.getDate() + '</span></div>';
+        var isToday = day.toDateString() === TODAY.toDateString();
+        var cls = 'pdg-day';
+        if (isWeekend) cls += ' weekend';
+        if (isToday) cls += ' today-col';
+        headerHtml += '<div class="' + cls + '"><span class="pdg-dow">' + DOW_IT[day.getDay()] + '</span><span class="pdg-num">' + day.getDate() + '</span></div>';
       });
-      tl.innerHTML = tlHtml;
+      headerHtml += '</div>';
 
-      // labels + bars
-      var lblHtml = '<div class="gantt-label-head">Articolo / Impegno</div>';
-      var barHtml = '';
-      item.commits.forEach(function(c, i) {
+      /* ── Commit rows: day cells + bar ── */
+      var rowsHtml = '<div class="pdg-rows" style="position:relative;">';
+      var commits = item.commits || [];
+      commits.forEach(function(c, i) {
+        rowsHtml += '<div class="pdg-row" onclick="pdGanttScrollToDay(' + Math.round((new Date(c.start) - start) / DAY_MS) + ')">';
+
+        // Day cells for grid lines
+        days.forEach(function(day) {
+          var isWeekend = day.getDay() === 0 || day.getDay() === 6;
+          var isToday = day.toDateString() === TODAY.toDateString();
+          var cellCls = 'pdg-cell';
+          if (isWeekend) cellCls += ' weekend';
+          if (isToday) cellCls += ' today-col';
+          rowsHtml += '<div class="' + cellCls + '"></div>';
+        });
+
+        // Bar
         var cs = new Date(c.start);
         var ce = new Date(c.end);
-        var leftDay = Math.round((cs - start) / DAY_MS);
-        var dur = Math.round((ce - cs) / DAY_MS) + 1;
+        var leftDay = (cs - start) / DAY_MS;
+        var dur = (ce - cs) / DAY_MS + 1;
         var colorMap = { 'confirmed': 'oklch(55% 0.15 250)', 'allestimento': 'var(--success)', 'in-corso': 'var(--warn)', 'bozza': 'var(--muted)', 'rientro': 'oklch(55% 0.10 300)' };
         var col = colorMap[c.status] || 'var(--muted)';
-        lblHtml += '<div class="gantt-label-row" onclick="pdGanttScrollToDay(' + leftDay + ')" data-idx="' + i + '"><span class="gantt-label-name">' + c.client + '</span><span class="gantt-label-qty">' + c.qty + ' pz</span></div>';
-        barHtml += '<div class="gt-bar" style="left:' + (leftDay * 42) + 'px;width:' + (dur * 42 - 4) + 'px;background:' + col + ';" title="' + c.order + ' — ' + c.client + ' (' + c.event + ')"></div>';
+        rowsHtml += '<div class="pdg-bar" style="left:' + (leftDay * PDG_DAY_W) + 'px;width:' + (dur * PDG_DAY_W - 4) + 'px;background:' + col + ';" title="' + c.order + ' — ' + c.client + ' (' + c.event + ')">' + c.order.replace('#', '') + '</div>';
+
+        rowsHtml += '</div>';
       });
+      rowsHtml += '</div>';
 
-      // oggi marker
-      var todayOffset = Math.round((TODAY - start) / DAY_MS);
-      if (todayOffset >= 0 && todayOffset < days.length) {
-        barHtml += '<div class="gt-today-marker" style="left:' + (todayOffset * 42) + 'px;"><span class="gt-today-label">OGGI</span></div>';
+      grid.innerHTML = headerHtml + rowsHtml;
+
+      /* ── Today marker ── */
+      var todayOffset = (TODAY - start) / DAY_MS;
+      var todayPx = todayOffset * PDG_DAY_W;
+      var rowsContainer = grid.querySelector('.pdg-rows');
+      if (rowsContainer && todayOffset >= 0 && todayOffset < days.length) {
+        var marker = document.createElement('div');
+        marker.className = 'pdg-today-marker';
+        marker.style.left = todayPx + 'px';
+        var label = document.createElement('span');
+        label.className = 'pdg-today-label';
+        label.textContent = 'OGGI';
+        marker.appendChild(label);
+        rowsContainer.appendChild(marker);
       }
 
-      lbl.innerHTML = lblHtml;
-
-      // replace bars container
-      var tlEl = document.getElementById('pd-gantt-timeline');
-      var existingBars = tlEl.querySelector('.gt-bars');
-      if (!existingBars) {
-        var barsDiv = document.createElement('div');
-        barsDiv.className = 'gt-bars';
-        barsDiv.style.position = 'absolute'; barsDiv.style.top = '42px';
-        barsDiv.style.left = '0'; barsDiv.style.right = '0'; barsDiv.style.bottom = '0';
-        barsDiv.style.pointerEvents = 'none';
-        barsDiv.innerHTML = barHtml;
-        tlEl.appendChild(barsDiv);
-      } else {
-        existingBars.innerHTML = barHtml;
-      }
-
-      // legend
+      /* ── Legend ── */
       var legHtml = '<h4>Impegni Articolo</h4>';
-      item.commits.forEach(function(c, i) {
+      commits.forEach(function(c, i) {
         var cs = new Date(c.start), ce = new Date(c.end);
         var colorMap = { 'confirmed': 'oklch(55% 0.15 250)', 'allestimento': 'var(--success)', 'in-corso': 'var(--warn)', 'bozza': 'var(--muted)', 'rientro': 'oklch(55% 0.10 300)' };
         legHtml += '<div class="gantt-commit-row" onclick="pdGanttScrollToDay(' + Math.round((cs - start) / DAY_MS) + ')"><span class="commit-dot" style="background:' + (colorMap[c.status] || 'var(--muted)') + ';"></span><div class="commit-info"><div class="commit-client">' + c.client + ' — ' + c.order + '</div><div class="commit-period">' + cs.getDate() + '/' + (cs.getMonth()+1) + ' – ' + ce.getDate() + '/' + (ce.getMonth()+1) + ' · ' + c.event + '</div></div><span class="commit-qty">' + c.qty + ' pz</span></div>';
       });
       document.getElementById('pd-gantt-legend').innerHTML = legHtml;
 
-      // summary
+      /* ── Summary ── */
       var summaryHtml = '<h4>Riepilogo Disponibilità</h4>';
       summaryHtml += '<div class="summary-row"><span class="summary-label">Totale magazzino</span><span class="summary-val">' + item.qty + ' pz</span></div>';
-      var totCommitted = item.commits.reduce(function(a, c) { return a + c.qty; }, 0);
+      var totCommitted = commits.reduce(function(a, c) { return a + c.qty; }, 0);
       summaryHtml += '<div class="summary-row"><span class="summary-label">Impegnati (prossimi 21gg)</span><span class="summary-val" style="color:' + (totCommitted > item.qty * 0.7 ? 'var(--danger)' : 'var(--warn)') + ';">' + totCommitted + ' pz</span></div>';
       summaryHtml += '<div class="summary-row"><span class="summary-label">Media disponibilità giornaliera</span><span class="summary-val" style="color:var(--success);">' + Math.max(0, item.qty - totCommitted) + ' pz</span></div>';
       document.getElementById('pd-gantt-summary').innerHTML = summaryHtml;
 
       // scroll to today
       setTimeout(function() {
-        if (todayOffset >= 0 && vp) vp.scrollLeft = Math.max(0, (todayOffset - 2) * 42);
-      }, 50);
+        var vp = document.getElementById('pd-gantt-viewport');
+        if (vp && todayOffset >= 0) vp.scrollLeft = Math.max(0, (todayOffset - 2) * PDG_DAY_W);
+      }, 100);
     }
 
     function pdGanttScrollBy(days) {
