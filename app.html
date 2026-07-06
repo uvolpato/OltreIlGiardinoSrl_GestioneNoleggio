@@ -1410,6 +1410,10 @@
       .qf-grid { grid-template-columns: 1fr; }
       .q-final-grid { grid-template-columns: 1fr; }
       .q-catalog-item .item-avail { flex-wrap: wrap; gap: 4px; }
+      .log-grid { grid-template-columns: 1fr; }
+      .log-vincoli-grid { grid-template-columns: 1fr; }
+      .pd-anagrafica-grid { grid-template-columns: 1fr; }
+      .doc-log-grid { grid-template-columns: 1fr; }
     }
 
     /* ─── hidden sections ───────────────────────────────────────── */
@@ -1432,6 +1436,155 @@
       z-index: 100;
     }
     .app-footer strong { color: var(--fg); }
+
+    /* ── IVA + sconto fisso ── */
+    .q-sel-iva {
+      width: 56px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px;
+      font-family: var(--font-mono); font-size: 11px; background: var(--surface); color: var(--fg);
+    }
+    .q-sel-iva:focus { outline: none; border-color: var(--accent); }
+    .q-sel-fixed-discount {
+      width: 72px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px;
+      font-family: var(--font-mono); font-size: 13px; text-align: right;
+      background: var(--surface); color: var(--fg);
+    }
+    .q-sel-fixed-discount:focus { outline: none; border-color: var(--accent); }
+    .q-sel-price-manual {
+      width: 80px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px;
+      font-family: var(--font-mono); font-size: 12px; text-align: right;
+      background: color-mix(in oklch, var(--warn) 6%, var(--surface)); color: var(--fg);
+    }
+    .q-sel-price-manual:focus { outline: none; border-color: var(--warn); }
+    .q-iva-row { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+    .q-iva-row .iva-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+    .sel-price-ovr-btn {
+      display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono);
+      font-size: 10px; cursor: pointer; color: var(--muted); padding: 2px 4px; border-radius: 3px;
+      border: 1px dashed var(--border); background: transparent; transition: all 0.1s;
+    }
+    .sel-price-ovr-btn:hover { border-color: var(--warn); color: var(--warn); }
+    .sel-price-ovr-btn.active { border-style: solid; border-color: var(--warn); color: var(--warn); background: color-mix(in oklch, var(--warn) 6%, transparent); }
+    .q-summary-iva-detail { margin-top: 4px; font-size: 12px; color: var(--muted); }
+    .q-summary-iva-detail .iva-line { display: flex; justify-content: space-between; padding: 2px 0; }
+
+    /* ── Logistica step ── */
+    .log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .log-grid .full { grid-column: 1 / -1; }
+    .log-section-title {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--muted); font-weight: 500;
+      border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 12px;
+      grid-column: 1 / -1;
+    }
+    .log-containers {
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      max-height: 240px; overflow-y: auto; margin-bottom: 8px;
+    }
+    .log-cont-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+      border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .log-cont-item:last-child { border-bottom: none; }
+    .log-cont-item:hover { background: var(--fg-soft); }
+    .log-cont-item input[type="checkbox"] { accent-color: var(--accent); }
+    .log-cont-item .cont-info { flex: 1; }
+    .log-cont-item .cont-name { font-weight: 500; }
+    .log-cont-item .cont-meta { font-size: 11px; color: var(--muted); }
+    .log-cont-item .cont-qty input {
+      width: 48px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px;
+      font-family: var(--font-mono); font-size: 12px; text-align: center;
+    }
+    .log-volume-box {
+      background: var(--fg-soft); border-radius: var(--radius-lg); padding: 14px 18px;
+      display: flex; gap: 20px; align-items: center; flex-wrap: wrap;
+    }
+    .log-volume-item { text-align: center; }
+    .log-volume-item .vol-val {
+      font-family: var(--font-mono); font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+    }
+    .log-volume-item .vol-label {
+      font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+      color: var(--muted); letter-spacing: 0.05em;
+    }
+    .log-volume-item .vol-val.accent { color: var(--accent); }
+    .log-volume-item .vol-val.warn { color: var(--warn); }
+    .log-vincoli {
+      border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px;
+    }
+    .log-vincoli-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .log-vincoli label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+    .log-vincoli label input[type="checkbox"] { accent-color: var(--accent); }
+    .log-vincoli label select, .log-vincoli label input[type="text"] {
+      margin-left: auto; padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px;
+      font-family: var(--font-mono); font-size: 12px; width: 120px;
+    }
+
+    /* ── Product detail: new tabs ── */
+    .pd-anagrafica-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .pd-anagrafica-cell {
+      display: flex; flex-direction: column; gap: 2px;
+      padding: 12px 14px; background: var(--fg-soft); border-radius: var(--radius);
+    }
+    .pd-anagrafica-cell .pd-label {
+      font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--muted);
+    }
+    .pd-anagrafica-cell .pd-val { font-weight: 600; font-size: 14px; }
+    .pd-movimenti-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .pd-movimenti-table th {
+      padding: 8px 10px; text-align: left; background: var(--fg-soft);
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--muted); font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+    .pd-movimenti-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    .pd-movimenti-table tbody tr:hover { background: var(--fg-soft); }
+    .pd-movimenti-table .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+    .pd-movimenti-table .saldo { font-weight: 700; font-family: var(--font-mono); }
+    .pd-movimenti-table .saldo.pos { color: var(--success); }
+    .pd-movimenti-table .saldo.neg { color: var(--danger); }
+
+    /* ── Pagamenti ── */
+    .pag-storico-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    .pag-storico-table th {
+      padding: 7px 10px; text-align: left; background: var(--fg-soft);
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--muted); font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+    .pag-storico-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+    .pag-storico-table tbody tr:hover { background: var(--fg-soft); }
+    .pag-storico-table .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+    .pag-badge {
+      display: inline-flex; padding: 2px 7px; border-radius: 999px;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+    }
+    .pag-badge.pagato { background: color-mix(in oklch, var(--success) 12%, transparent); color: var(--success); }
+    .pag-badge.in_attesa { background: color-mix(in oklch, var(--warn) 12%, transparent); color: oklch(50% 0.14 80); }
+    .pag-badge.scaduto { background: color-mix(in oklch, var(--danger) 12%, transparent); color: var(--danger); }
+
+    /* ── Documento logistico (in ordine) ── */
+    .doc-log-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .doc-log-field { display: flex; flex-direction: column; gap: 3px; }
+    .doc-log-field label {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .doc-log-field input, .doc-log-field select, .doc-log-field textarea {
+      padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); font: inherit; font-size: 12px; color: var(--fg);
+    }
+    .doc-log-field textarea { resize: vertical; min-height: 50px; }
+
+    /* ── composito ── */
+    .comp-sub-row { font-size: 12px; color: var(--muted); padding-left: 28px; }
+    .comp-sub-row td { padding: 4px 10px !important; }
+    .comp-badge {
+      display: inline-flex; padding: 1px 6px; border-radius: 4px;
+      background: color-mix(in oklch, oklch(55% 0.15 280) 10%, transparent);
+      color: oklch(45% 0.15 280); font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+      margin-left: 6px; letter-spacing: 0.05em; text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
@@ -1477,7 +1630,7 @@
           </button>
           <button class="nav-item" onclick="showPage('ddt')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
-            DDT / Movimenti
+            Logistica
           </button>
         </div>
         <div class="sidebar-section">
@@ -1872,6 +2025,8 @@
             <button class="pd-tab" onclick="switchPdTab('price')">Listino</button>
             <button class="pd-tab" onclick="switchPdTab('gallery')">Galleria</button>
             <button class="pd-tab" onclick="switchPdTab('gantt')">Disponibilità</button>
+            <button class="pd-tab" onclick="switchPdTab('anagrafica')">Anagrafica</button>
+            <button class="pd-tab" onclick="switchPdTab('movimenti')">Movimenti</button>
           </div>
 
           <!-- TAB: Scheda Tecnica -->
@@ -1963,6 +2118,47 @@
                   <div class="gantt-sparkline" id="gantt-sparkline"></div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- TAB: Anagrafica -->
+          <div class="pd-tab-panel" id="pd-tab-anagrafica">
+            <div class="pd-anagrafica-grid">
+              <div class="pd-anagrafica-cell"><span class="pd-label">Fornitore</span><span class="pd-val">Falegnameria Rossi snc · Grassobbio (BG)</span></div>
+              <div class="pd-anagrafica-cell"><span class="pd-label">Contatto fornitore</span><span class="pd-val">Giuseppe Rossi · 035 123 4567</span></div>
+              <div class="pd-anagrafica-cell"><span class="pd-label">Data acquisto</span><span class="pd-val">15/03/2024</span></div>
+              <div class="pd-anagrafica-cell"><span class="pd-label">Costo acquisto</span><span class="pd-val">€ 18,50 /pz</span></div>
+              <div class="pd-anagrafica-cell"><span class="pd-label">Posizione magazzino</span><span class="pd-val">Scaffale A3 · Corsia 2</span></div>
+              <div class="pd-anagrafica-cell"><span class="pd-label">Acquisto iniziale</span><span class="pd-val">200 pz · 15/03/2024</span></div>
+              <div class="pd-anagrafica-cell"><span class="pd-label">Ultimo acquisto</span><span class="pd-val">50 pz · 10/01/2026 (€ 19,20/pz)</span></div>
+              <div class="pd-anagrafica-cell"><span class="pd-label">Note logistica</span><span class="pd-val">Imballo cartone 46×51×h91 · Pileabile max 8</span></div>
+              <div class="pd-anagrafica-cell" style="grid-column:1/-1;"><span class="pd-label">Note interne</span><span class="pd-val">Utilizzato principalmente per cerimonie. Richiedere conferma disponibilità per quantità > 50 pz.</span></div>
+            </div>
+          </div>
+
+          <!-- TAB: Movimenti (entrate/uscite per evento) -->
+          <div class="pd-tab-panel" id="pd-tab-movimenti">
+            <table class="pd-movimenti-table">
+              <thead>
+                <tr>
+                  <th>Data</th><th>Tipo</th><th>Evento</th><th>Ordine</th><th class="num">Qtà</th><th class="num">Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>15/03/2024</td><td><span class="pill pill-green">Acquisto</span></td><td>—</td><td>—</td><td class="num">+200</td><td class="num saldo pos">200</td></tr>
+                <tr><td>10/01/2026</td><td><span class="pill pill-green">Acquisto</span></td><td>—</td><td>—</td><td class="num">+50</td><td class="num saldo pos">250</td></tr>
+                <tr><td>15/06/2026</td><td><span class="pill pill-red">DDT Uscita</span></td><td>Battesimo Rossi</td><td class="num">#2026/039</td><td class="num">-35</td><td class="num saldo pos">215</td></tr>
+                <tr><td>16/06/2026</td><td><span class="pill pill-green">DDT Ingresso</span></td><td>Battesimo Rossi</td><td class="num">#2026/039</td><td class="num">+35</td><td class="num saldo pos">250</td></tr>
+                <tr><td>18/06/2026</td><td><span class="pill pill-red">DDT Uscita</span></td><td>Convegno Tech</td><td class="num">#2026/045</td><td class="num">-40</td><td class="num saldo pos">210</td></tr>
+                <tr><td>22/06/2026</td><td><span class="pill pill-red">DDT Uscita</span></td><td>Matrimonio Verdi</td><td class="num">#2026/047</td><td class="num">-50</td><td class="num saldo pos">160</td></tr>
+                <tr><td>25/06/2026</td><td><span class="pill pill-red">DDT Uscita</span></td><td>Workshop Design</td><td class="num">#2026/046</td><td class="num">-60</td><td class="num saldo pos">100</td></tr>
+                <tr><td>28/06/2026</td><td><span class="pill pill-red">DDT Uscita</span></td><td>Fiera Bergamo</td><td class="num">#2026/044</td><td class="num">-50</td><td class="num saldo pos">50</td></tr>
+              </tbody>
+            </table>
+            <div style="margin-top:12px;padding:12px 16px;background:var(--fg-soft);border-radius:var(--radius-lg);display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+              <span style="font-family:var(--font-mono);font-size:11px;text-transform:uppercase;color:var(--muted);">SALDO CORRENTE:</span>
+              <span style="font-family:var(--font-mono);font-size:28px;font-weight:700;color:var(--success);">200 pz</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">di cui 50 in noleggio attivo</span>
             </div>
           </div>
         </div>
@@ -2258,14 +2454,59 @@
       <!-- DETTAGLIO ORDINE -->
       <!-- ══════════════════════════════════════════════════════════ -->
       <!-- ══════════════════════════════════════════════════════════ -->
-      <!-- DDT / MOVIMENTI -->
-      <!-- ══════════════════════════════════════════════════════════ -->
+      <!-- LOGISTICA / CONTENITORI + DOCUMENTI -->
       <div id="page-ddt" class="page">
         <div class="topbar">
-          <span class="topbar-title">DDT / Movimenti</span>
+          <span class="topbar-title">Logistica</span>
           <div class="topbar-actions">
+            <button class="btn btn-secondary btn-sm">+ Nuovo contenitore</button>
             <button class="btn btn-primary btn-sm">+ Nuovo DDT</button>
           </div>
+        </div>
+        <div class="content">
+
+          <!-- Contenitori -->
+          <div class="card" style="margin-bottom:20px;">
+            <div class="card-header"><h3>Anagrafica Contenitori</h3><button class="btn btn-ghost btn-sm">Modifica →</button></div>
+            <table class="ds-table" style="font-size:13px;">
+              <thead>
+                <tr>
+                  <th>Codice</th><th>Nome</th><th>Tipo</th><th>Dim. (cm)</th><th>Volume (m³)</th><th>Peso (kg)</th><th>Carico max (kg)</th><th>Q.tà</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="num">CAS-001</td><td style="font-weight:500;">Cassa media</td><td>Cassa</td><td>60×40×30</td><td class="num">0,072</td><td class="num">8</td><td class="num">25</td><td class="num">45</td><td><button class="btn btn-ghost btn-sm">✎</button></td></tr>
+                <tr><td class="num">CAS-002</td><td style="font-weight:500;">Cassa grande</td><td>Cassa</td><td>120×80×50</td><td class="num">0,480</td><td class="num">20</td><td class="num">50</td><td class="num">30</td><td><button class="btn btn-ghost btn-sm">✎</button></td></tr>
+                <tr><td class="num">CAS-003</td><td style="font-weight:500;">Baule cristallo</td><td>Baule</td><td>80×60×60</td><td class="num">0,288</td><td class="num">15</td><td class="num">35</td><td class="num">12</td><td><button class="btn btn-ghost btn-sm">✎</button></td></tr>
+                <tr><td class="num">PAL-001</td><td style="font-weight:500;">Pallet EU</td><td>Pallet</td><td>120×80×15</td><td class="num">0,144</td><td class="num">25</td><td class="num">150</td><td class="num">200</td><td><button class="btn btn-ghost btn-sm">✎</button></td></tr>
+                <tr><td class="num">PAL-002</td><td style="font-weight:500;">Pallet industriale</td><td>Pallet</td><td>120×100×15</td><td class="num">0,180</td><td class="num">30</td><td class="num">200</td><td class="num">80</td><td><button class="btn btn-ghost btn-sm">✎</button></td></tr>
+                <tr><td class="num">CAR-001</td><td style="font-weight:500;">Carrello appendiabiti</td><td>Carrello</td><td>100×50×h180</td><td class="num">0,900</td><td class="num">10</td><td class="num">40</td><td class="num">15</td><td><button class="btn btn-ghost btn-sm">✎</button></td></tr>
+                <tr><td class="num">CAR-002</td><td style="font-weight:500;">Carrello piatto 80×60</td><td>Carrello</td><td>80×60×h120</td><td class="num">0,576</td><td class="num">12</td><td class="num">60</td><td class="num">10</td><td><button class="btn btn-ghost btn-sm">✎</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Documenti di riferimento -->
+          <div class="card">
+            <div class="card-header"><h3>Documenti di Riferimento</h3><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">Generati dal Gestionale Esterno</span></div>
+            <table class="ds-table" style="font-size:13px;">
+              <thead>
+                <tr>
+                  <th>Documento</th><th>Tipo</th><th>Ordine</th><th>Cliente</th><th>Data</th><th>Articoli</th><th>Stato</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="num">#2026/089</td><td><span class="pill pill-red">DDT Uscita</span></td><td class="num">#2026/047</td><td>Rossi Srl</td><td class="num">20/06/2026</td><td>6 righe · 89 pz</td><td><span class="pill pill-green">Confermato</span></td><td><button class="btn btn-ghost btn-sm">PDF</button></td></tr>
+                <tr><td class="num">#2026/088</td><td><span class="pill pill-green">DDT Ingresso</span></td><td class="num">#2026/039</td><td>Gialli Party</td><td class="num">19/06/2026</td><td>4 righe · 80 pz</td><td><span class="pill pill-green">Confermato</span></td><td><button class="btn btn-ghost btn-sm">PDF</button></td></tr>
+                <tr><td class="num">#2026/087</td><td><span class="pill pill-red">DDT Uscita</span></td><td class="num">#2026/045</td><td>Bianchi Eventi</td><td class="num">18/06/2026</td><td>5 righe · 55 pz</td><td><span class="pill pill-gray">Bozza</span></td><td><button class="btn btn-ghost btn-sm">PDF</button></td></tr>
+                <tr><td class="num">#2026/086</td><td><span class="pill pill-green">DDT Ingresso</span></td><td class="num">#2026/038</td><td>Arancio catering</td><td class="num">17/06/2026</td><td>3 righe · 45 pz</td><td><span class="pill pill-green">Confermato</span></td><td><button class="btn btn-ghost btn-sm">PDF</button></td></tr>
+                <tr><td class="num">#2026/085</td><td><span class="pill pill-red">DDT Uscita</span></td><td class="num">#2026/042</td><td>Neri Spa</td><td class="num">15/06/2026</td><td>7 righe · 120 pz</td><td><span class="pill pill-green">Confermato</span></td><td><button class="btn btn-ghost btn-sm">PDF</button></td></tr>
+                <tr><td class="num">FATT-001</td><td><span class="pill pill-blue">Fattura</span></td><td class="num">#2026/039</td><td>Gialli Party</td><td class="num">20/06/2026</td><td>€ 3.750,00</td><td><span class="pill pill-green">Emessa</span></td><td><button class="btn btn-ghost btn-sm">PDF</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
         </div>
         <div class="content">
           <div class="filter-bar">
@@ -2460,6 +2701,24 @@
               </tbody>
             </table>
           </div>
+
+          <!-- Storico Pagamenti Cliente -->
+          <div class="card" style="margin-top:20px;">
+            <div class="card-header"><h3>Storico Pagamenti — Rossi Srl (CLT-001)</h3><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">Ultimi 6 movimenti</span></div>
+            <table class="pag-storico-table">
+              <thead>
+                <tr><th>Data</th><th>Tipo</th><th>Ordine</th><th>Evento</th><th class="num">Importo</th><th>Stato</th><th>Scadenza</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>15/06/2026</td><td>Bonifico</td><td class="num">#2026/047</td><td>Matrimonio Verdi</td><td class="num" style="font-weight:600;">€ 3.000,00</td><td><span class="pag-badge pagato">Pagato</span></td><td>20/06/2026</td></tr>
+                <tr><td>—</td><td>Assegno</td><td class="num">#2026/047</td><td>Matrimonio Verdi</td><td class="num" style="font-weight:600;">€ 2.420,00</td><td><span class="pag-badge in_attesa">In attesa</span></td><td>30/06/2026</td></tr>
+                <tr><td>10/06/2026</td><td>Bonifico</td><td class="num">#2026/045</td><td>Convegno Tech</td><td class="num" style="font-weight:600;">€ 4.280,00</td><td><span class="pag-badge pagato">Pagato</span></td><td>30/06/2026</td></tr>
+                <tr><td>—</td><td>RID</td><td class="num">#2026/044</td><td>Fiera Bergamo</td><td class="num" style="font-weight:600;">€ 3.150,00</td><td><span class="pag-badge in_attesa">In attesa</span></td><td>15/07/2026</td></tr>
+                <tr><td>16/06/2026</td><td>Contanti</td><td class="num">#2026/039</td><td>Battesimo Rossi</td><td class="num" style="font-weight:600;">€ 3.750,00</td><td><span class="pag-badge pagato">Pagato</span></td><td>20/06/2026</td></tr>
+                <tr><td>01/06/2026</td><td>Bonifico</td><td class="num">#2026/038</td><td>Cena Gala</td><td class="num" style="font-weight:600;">€ 2.100,00</td><td><span class="pag-badge pagato">Pagato</span></td><td>15/06/2026</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -2497,9 +2756,11 @@
       <div class="quote-steps" id="quote-steps">
         <div class="quote-step active" onclick="quoteGoStep(1)"><span class="step-num">1</span>Dati ordine</div>
         <div class="quote-step-connector"></div>
-        <div class="quote-step" onclick="quoteGoStep(2)"><span class="step-num">2</span>Seleziona articoli</div>
+        <div class="quote-step" onclick="quoteGoStep(2)"><span class="step-num">2</span>Righe ordine</div>
         <div class="quote-step-connector"></div>
-        <div class="quote-step" onclick="quoteGoStep(3)"><span class="step-num">3</span>Riepilogo</div>
+        <div class="quote-step" onclick="quoteGoStep(3)"><span class="step-num">3</span>Logistica</div>
+        <div class="quote-step-connector"></div>
+        <div class="quote-step" onclick="quoteGoStep(4)"><span class="step-num">4</span>Riepilogo</div>
       </div>
       <div class="quote-body">
         <div class="quote-step-panel active" id="qstep-1">
@@ -2554,14 +2815,15 @@
                   <th>Articolo</th>
                   <th class="num" style="width:70px;">Qtà</th>
                   <th>Tariffa</th>
-                  <th class="num" style="width:80px;">Prezzo ud.</th>
-                  <th class="num" style="width:64px;">Sconto %</th>
-                  <th class="num" style="width:90px;">Totale riga</th>
+                  <th class="num" style="width:80px;">Prezzo</th>
+                  <th class="num" style="width:50px;">Sconto</th>
+                  <th style="width:44px;">IVA</th>
+                  <th class="num" style="width:90px;">Tot. riga</th>
                   <th style="width:32px;"></th>
                 </tr>
               </thead>
               <tbody id="q-selected-tbody">
-                <tr class="empty-row"><td colspan="8">Nessun articolo selezionato. Clicca "Aggiungi articoli" per aprire il catalogo.</td></tr>
+                <tr class="empty-row"><td colspan="9">Nessun articolo selezionato. Clicca "Aggiungi articoli" per aprire il catalogo.</td></tr>
               </tbody>
             </table>
           </div>
@@ -2581,12 +2843,86 @@
             </div>
           </div>
         </div>
+        <!-- STEP 3: LOGISTICA -->
         <div class="quote-step-panel" id="qstep-3">
+          <div class="log-grid">
+            <div class="log-section-title">Contenitori e imballo</div>
+            <div style="grid-column:1/-1;">
+              <div class="log-containers" id="log-containers-list">
+                <div class="log-cont-item">
+                  <input type="checkbox" id="log-c1" onchange="quoteCalcVolume()" checked />
+                  <div class="cont-info">
+                    <div class="cont-name">Cassa media 60×40×30</div>
+                    <div class="cont-meta">Cod. CAS-001 · Max 25 kg · Per sedie, tovaglie</div>
+                  </div>
+                  <div class="cont-qty"><input type="number" min="0" value="4" id="log-c1-qty" onchange="quoteCalcVolume()" /> pz</div>
+                </div>
+                <div class="log-cont-item">
+                  <input type="checkbox" id="log-c2" onchange="quoteCalcVolume()" checked />
+                  <div class="cont-info">
+                    <div class="cont-name">Cassa grande 120×80×50</div>
+                    <div class="cont-meta">Cod. CAS-002 · Max 50 kg · Per tavoli, mobili</div>
+                  </div>
+                  <div class="cont-qty"><input type="number" min="0" value="3" id="log-c2-qty" onchange="quoteCalcVolume()" /> pz</div>
+                </div>
+                <div class="log-cont-item">
+                  <input type="checkbox" id="log-c3" onchange="quoteCalcVolume()" />
+                  <div class="cont-info">
+                    <div class="cont-name">Baule per cristallo 80×60×60</div>
+                    <div class="cont-meta">Cod. CAS-003 · Max 35 kg · Per lampadari, cristalli</div>
+                  </div>
+                  <div class="cont-qty"><input type="number" min="0" value="1" id="log-c3-qty" onchange="quoteCalcVolume()" /> pz</div>
+                </div>
+                <div class="log-cont-item">
+                  <input type="checkbox" id="log-c4" onchange="quoteCalcVolume()" />
+                  <div class="cont-info">
+                    <div class="cont-name">Pallet EU 120×80</div>
+                    <div class="cont-meta">Cod. PAL-001 · Max 150 kg · Carrello elevatore</div>
+                  </div>
+                  <div class="cont-qty"><input type="number" min="0" value="2" id="log-c4-qty" onchange="quoteCalcVolume()" /> pz</div>
+                </div>
+                <div class="log-cont-item">
+                  <input type="checkbox" id="log-c5" onchange="quoteCalcVolume()" checked />
+                  <div class="cont-info">
+                    <div class="cont-name">Carrello appendiabiti</div>
+                    <div class="cont-meta">Cod. CAR-001 · H max 180 cm · Per capi sospesi</div>
+                  </div>
+                  <div class="cont-qty"><input type="number" min="0" value="2" id="log-c5-qty" onchange="quoteCalcVolume()" /> pz</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="full">
+              <div class="log-volume-box" id="log-volume-box">
+                <div class="log-volume-item"><div class="vol-val accent" id="log-vol-tot">0,00</div><div class="vol-label">Volume tot. (m³)</div></div>
+                <div class="log-volume-item"><div class="vol-val" id="log-vol-peso">0</div><div class="vol-label">Peso tot. (kg)</div></div>
+                <div class="log-volume-item"><div class="vol-val" id="log-vol-colli">0</div><div class="vol-label">Colli</div></div>
+                <div class="log-volume-item"><div class="vol-val" id="log-vol-pallet">0</div><div class="vol-label">Pallet stimati</div></div>
+                <div class="log-volume-item"><div class="vol-val warn" id="log-vol-viaggi">0</div><div class="vol-label">Viaggi stimati</div></div>
+              </div>
+            </div>
+
+            <div class="log-section-title">Vincoli di consegna</div>
+            <div class="full log-vincoli">
+              <div class="log-vincoli-grid">
+                <label><input type="checkbox" /> ZTL — <select><option>Non specificato</option><option>Area B</option><option>Area C</option><option>Area A</option></select></label>
+                <label><input type="checkbox" /> Fascia oraria — <select><option>Non specificato</option><option>7:00-9:00</option><option>9:00-12:00</option><option>14:00-17:00</option><option>20:00-6:00</option></select></label>
+                <label><input type="checkbox" /> Serve muletto in sede</label>
+                <label><input type="checkbox" /> Serve personale scarico/carico</label>
+                <label><input type="checkbox" /> Serve montacarichi/ascensore</label>
+                <label><input type="checkbox" /> Parcheggio riservato <input type="text" placeholder="distanza metro..." /></label>
+                <label style="grid-column:1/-1;"><input type="checkbox" /> Note per trasportatore <input type="text" placeholder="Istruiti per consegna, riferimenti..." style="flex:1;width:auto;" /></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- STEP 4: RIEPILOGO -->
+        <div class="quote-step-panel" id="qstep-4">
           <div class="q-final-grid" id="q-final-grid"></div>
           <div class="q-selected-grid q-final-table">
             <table>
               <thead>
-                <tr><th>Articolo</th><th class="num">Qtà</th><th>Tariffa</th><th class="num">Prezzo ud.</th><th class="num">Sconto</th><th class="num">Totale riga</th></tr>
+                <tr><th>Articolo</th><th class="num">Qtà</th><th>Tariffa</th><th class="num">Prezzo ud.</th><th class="num">Sconto</th><th class="num">IVA</th><th class="num">Totale riga</th></tr>
               </thead>
               <tbody id="q-final-tbody"></tbody>
             </table>
@@ -2672,6 +3008,11 @@
         subtotal: '€ 6.022,00', discountAmt: '− € 602,00', total: '€ 5.420,00',
         notes: 'Accesso retro via alberi. Parcheggio furgone davanti all\'ingresso. Citofonare "Verdi".',
         ddt: [{ num: '#2026/089', type: 'Uscita', typeCls: 'pill-red', date: '20/06/2026', items: '50 sedie, 10 tavoli, 10 tovaglie, 8 poltrone, 6 lampade, 5 runner', status: 'Confermato', statusCls: 'pill-green' }],
+        payments: [
+          { type: 'Bonifico', date: '15/06/2026', amount: '€ 3.000,00', status: 'Pagato', statusCls: 'pagato', scadenza: '20/06/2026' },
+          { type: 'Assegno', date: '—', amount: '€ 2.420,00', status: 'In attesa', statusCls: 'in_attesa', scadenza: '30/06/2026' }
+        ],
+        docLog: { ztl: 'Area B, orario 7-9', muletto: true, personale: '2 operatori', note: 'Accesso da via secondaria. Parcheggio riservato 50m.' },
         photos: [
           { src: 'assets/images/hero-1.jpg', caption: 'Vista allestimento — sala principale' },
           { src: 'assets/images/prod-sedia-ball-bristol.jpg', caption: 'Dettaglio sedie al tavolo' },
@@ -2695,6 +3036,8 @@
         subtotal: '€ 4.820,00', discountAmt: '− € 540,00', total: '€ 4.280,00',
         notes: 'Piano terra, area espositiva 200mq. Need rampa di accesso per allestimento.',
         ddt: [{ num: '#2026/087', type: 'Uscita', typeCls: 'pill-red', date: '18/06/2026', items: '40 sedie, 20 sedie ball, 8 tavoli, 12 lampade', status: 'Bozza', statusCls: 'pill-gray' }],
+        payments: [{ type: 'Bonifico', date: '10/06/2026', amount: '€ 4.280,00', status: 'Pagato', statusCls: 'pagato', scadenza: '30/06/2026' }],
+        docLog: { ztl: 'Area C, 24h', muletto: false, personale: '1 operatore', note: 'Piano terra, rampa accesso.' },
         photos: [],
         questionnaire: null
       },
@@ -2712,6 +3055,8 @@
         subtotal: '€ 3.550,00', discountAmt: '− € 400,00', total: '€ 3.150,00',
         notes: 'Stand aziendale 30mq. Accesso carico dal retro fiera dalle 05:00.',
         ddt: [],
+        payments: [{ type: 'RID', date: '—', amount: '€ 3.150,00', status: 'In attesa', statusCls: 'in_attesa', scadenza: '15/07/2026' }],
+        docLog: { ztl: 'No', muletto: true, personale: '2 operatori + muletto', note: 'Allestimento notturno, accesso carrello.' },
         photos: [],
         questionnaire: null
       },
@@ -2729,6 +3074,8 @@
         subtotal: '€ 3.200,00', discountAmt: '− € 360,00', total: '€ 2.840,00',
         notes: 'Giardino privato. Citofonare al portone. Parcheggio limitato — furgone solo per scarico.',
         ddt: [],
+        payments: [{ type: 'Bonifico', date: '—', amount: '€ 2.840,00', status: 'In attesa', statusCls: 'in_attesa', scadenza: '10/07/2026' }],
+        docLog: { ztl: 'No', muletto: false, personale: '1 operatore', note: 'Giardino privato, parcheggio limitato.' },
         photos: [],
         questionnaire: null
       },
@@ -2745,6 +3092,8 @@
         subtotal: '€ 2.200,00', discountAmt: '− € 280,00', total: '€ 1.920,00',
         notes: 'Evento open air. Copertura prevista in caso di pioggia.',
         ddt: [],
+        payments: [{ type: 'Bonifico', date: '—', amount: '€ 1.920,00', status: 'In attesa', statusCls: 'in_attesa', scadenza: '15/07/2026' }],
+        docLog: { ztl: 'No', muletto: false, personale: '1 operatore', note: 'Open air, copertura pioggia prevista.' },
         photos: [],
         questionnaire: null
       },
@@ -2763,6 +3112,8 @@
         subtotal: '€ 4.200,00', discountAmt: '− € 450,00', total: '€ 3.750,00',
         notes: 'Evento in villa. Parcheggio largo. Contatto: 333 4567890.',
         ddt: [{ num: '#2026/088', type: 'Ingresso', typeCls: 'pill-green', date: '19/06/2026', items: '40 sedie ball, 6 tavoli, 10 lanterne, 20 cuscini', status: 'Confermato', statusCls: 'pill-green' }],
+        payments: [{ type: 'Contanti', date: '16/06/2026', amount: '€ 3.750,00', status: 'Pagato', statusCls: 'pagato', scadenza: '20/06/2026' }],
+        docLog: { ztl: 'No', muletto: false, personale: '2 operatori', note: 'Villa con ampio parcheggio, contatto 333 4567890.' },
         photos: [
           { src: 'assets/images/hero-2.jpg', caption: 'Vista generale allestimento' },
           { src: 'assets/images/prod-sedia-amal.jpg', caption: 'Dettaglio poltrone zona lounge' },
@@ -2872,6 +3223,32 @@
       html += '<div class="om-ai-actions"><span class="om-ai-saved" id="om-ai-saved">✓ Salvato</span><button class="btn btn-primary btn-sm" onclick="saveAiQuestionnaire()">Salva questionario</button></div>';
       html += '</div></div>';
 
+      /* ── PAGAMENTI ── */
+      if (o.payments && o.payments.length) {
+        html += '<div class="card"><div class="card-header"><h3>Pagamenti</h3></div>';
+        html += '<table class="pag-storico-table"><thead><tr><th>Tipo</th><th>Data pagamento</th><th class="num">Importo</th><th>Stato</th><th>Scadenza</th></tr></thead><tbody>';
+        o.payments.forEach(function(p) {
+          html += '<tr><td>' + p.type + '</td><td>' + p.date + '</td><td class="num" style="font-weight:600;">' + p.amount + '</td><td><span class="pag-badge ' + p.statusCls + '">' + p.status + '</span></td><td>' + p.scadenza + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        html += '<div style="margin-top:8px;display:flex;gap:6px;"><button class="btn btn-ghost btn-sm" onclick="alert(\'Nuovo pagamento — in arrivo\')">+ Registra pagamento</button>';
+        html += '<button class="btn btn-ghost btn-sm" onclick="alert(\'Storico pagamenti completo — in arrivo\')">Storico cliente</button></div>';
+        html += '</div>';
+      }
+
+      /* ── DOCUMENTO LOGISTICO ── */
+      if (o.docLog) {
+        var dl = o.docLog;
+        html += '<div class="card"><div class="card-header"><h3>Documento Logistico</h3></div>';
+        html += '<div class="doc-log-grid">';
+        html += '<div class="doc-log-field"><label>ZTL / Aree regolamentate</label><input value="' + (dl.ztl || '—') + '" /></div>';
+        html += '<div class="doc-log-field"><label>Serve muletto</label><input value="' + (dl.muletto ? 'Sì' : 'No') + '" /></div>';
+        html += '<div class="doc-log-field"><label>Personale carico/scarico</label><input value="' + (dl.personale || '—') + '" /></div>';
+        html += '<div class="doc-log-field"><label>Note trasportatore</label><input value="' + (dl.note || '—') + '" /></div>';
+        html += '</div><div style="margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="alert(\'PDF Documento Logistico — in arrivo\')">📄 Scarica PDF</button></div>';
+        html += '</div>';
+      }
+
       document.getElementById('om-body').innerHTML = html;
       modal.classList.add('open');
       document.body.style.overflow = 'hidden';
@@ -2939,8 +3316,8 @@
     function switchPdTab(tab) {
       document.querySelectorAll('.pd-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.pd-tab-panel').forEach(p => p.classList.remove('active'));
-      var tabMap = { tech: 'pd-tab-tech', price: 'pd-tab-price', gallery: 'pd-tab-gallery', gantt: 'pd-tab-gantt' };
-      var labels = { tech: 0, price: 1, gallery: 2, gantt: 3 };
+      var tabMap = { tech: 'pd-tab-tech', price: 'pd-tab-price', gallery: 'pd-tab-gallery', gantt: 'pd-tab-gantt', anagrafica: 'pd-tab-anagrafica', movimenti: 'pd-tab-movimenti' };
+      var labels = { tech: 0, price: 1, gallery: 2, gantt: 3, anagrafica: 4, movimenti: 5 };
       document.querySelectorAll('.pd-tab')[labels[tab]].classList.add('active');
       document.getElementById(tabMap[tab]).classList.add('active');
       if (tab === 'gantt') buildGantt();
@@ -3565,7 +3942,15 @@
       { name: 'Candelabro acciaio',        code: 'LUC-020', cat: 'Luci',      qty: 25,  img: 'assets/images/prod-candelabro-acciaio.jpg', prices: { giorno: 5.00, '3gg': 11.00, settimana: 17.00, forfait: 22.00 },
         commits: [], quotes: []},
       { name: 'Lanterna Celine',           code: 'LUC-025', cat: 'Luci',      qty: 30,  img: 'assets/images/prod-lanterna-celine.jpg',    prices: { giorno: 4.00, '3gg': 9.00, settimana: 14.00, forfait: 18.00 },
-        commits: [], quotes: []}
+        commits: [], quotes: []},
+      { name: 'Bancone Pallet (composito)', code: 'BAN-001', cat: 'Banconi',   qty: 10,  img: 'assets/images/cat-banconi.png',              prices: { giorno: 25.00, '3gg': 55.00, settimana: 80.00, forfait: 100.00 },
+        commits: [{ client: 'Rossi Srl', order: '#2026/047', event: 'Matrimonio Verdi', start: '2026-06-22', end: '2026-06-23', qty: 2, status: 'allestimento' }],
+        quotes: [],
+        composito: [
+          { code: 'LGN-001', name: 'Piano legno 180×60', qty: 1, price: 12.00, unit: 'pz' },
+          { code: 'CAV-001', name: 'Cavalletti regolabili', qty: 2, price: 5.00, unit: 'pz' },
+          { code: 'PAL-001', name: 'Pallet EU 120×80', qty: 2, price: 3.00, unit: 'pz' }
+        ]}
     ];
 
     var quoteCurrentStep = 1;
@@ -3597,17 +3982,17 @@
 
     function quoteGoStep(step) {
       if (step > quoteCurrentStep + 1) return;
-      if (step === 3 && quoteSelectedItems.length === 0) return;
+      if (step >= 3 && quoteSelectedItems.length === 0) return;
       quoteCurrentStep = step;
       quoteUpdateSteps();
     }
 
     function quoteNext() {
-      if (quoteCurrentStep < 3) {
+      if (quoteCurrentStep < 4) {
         if (quoteCurrentStep === 2 && quoteSelectedItems.length === 0) return;
         quoteCurrentStep++;
         quoteUpdateSteps();
-        if (quoteCurrentStep === 3) quoteBuildFinal();
+        if (quoteCurrentStep === 4 || quoteCurrentStep === 3) quoteBuildFinal();
       } else {
         closeQuoteModal({ target: document.getElementById('quote-modal'), currentTarget: document.getElementById('quote-modal') });
       }
@@ -3631,10 +4016,43 @@
       });
       document.getElementById('q-btn-back').style.visibility = quoteCurrentStep > 1 ? 'visible' : 'hidden';
       var nextBtn = document.getElementById('q-btn-next');
-      if (quoteCurrentStep === 3) { nextBtn.textContent = 'Conferma Preventivo'; }
-      else if (quoteCurrentStep === 2) { nextBtn.textContent = 'Riepilogo →'; }
+      if (quoteCurrentStep === 4) { nextBtn.textContent = 'Conferma Preventivo'; }
+      else if (quoteCurrentStep === 2) { nextBtn.textContent = 'Logistica →'; }
+      else if (quoteCurrentStep === 3) { nextBtn.textContent = 'Riepilogo →'; }
       else { nextBtn.textContent = 'Continua →'; }
-      if (quoteCurrentStep === 3) quoteBuildFinal();
+      if (quoteCurrentStep === 3 || quoteCurrentStep === 4) quoteBuildFinal();
+    }
+
+    function quoteIsComposito(catalogIdx) {
+      return QUOTE_CATALOG[catalogIdx] && QUOTE_CATALOG[catalogIdx].composito;
+    }
+
+    function quoteCalcVolume() {
+      var vol = 0, peso = 0, colli = 0;
+      var conts = [
+        { id: 'log-c1', vol: 0.072, peso: 8, label: 'Cassa media' },
+        { id: 'log-c2', vol: 0.480, peso: 20, label: 'Cassa grande' },
+        { id: 'log-c3', vol: 0.288, peso: 15, label: 'Baule cristallo' },
+        { id: 'log-c4', vol: 0.096, peso: 25, label: 'Pallet EU' },
+        { id: 'log-c5', vol: 0.060, peso: 10, label: 'Carrello' }
+      ];
+      conts.forEach(function(c) {
+        var chk = document.getElementById(c.id);
+        if (chk && chk.checked) {
+          var qty = parseInt(document.getElementById(c.id + '-qty').value) || 0;
+          vol += c.vol * qty;
+          peso += c.peso * qty;
+          colli += qty;
+        }
+      });
+      var pallet = Math.max(1, Math.ceil(vol / 1.2));
+      var viaggi = Math.max(1, Math.ceil(vol / 8));
+      document.getElementById('log-vol-tot').textContent = vol.toFixed(2);
+      document.getElementById('log-vol-peso').textContent = peso;
+      document.getElementById('log-vol-colli').textContent = colli;
+      document.getElementById('log-vol-pallet').textContent = pallet;
+      document.getElementById('log-vol-viaggi').textContent = viaggi;
+      return { vol: vol, peso: peso, colli: colli, pallet: pallet, viaggi: viaggi };
     }
 
     function quoteGetEventDateRange() {
@@ -3747,9 +4165,14 @@
       var item = QUOTE_CATALOG[catalogIdx];
       var existing = quoteSelectedItems.find(function(s) { return s.catalogIdx === catalogIdx; });
       if (existing) { existing.qty += 1; } else {
+        var compRighe = item.composito ? item.composito.map(function(c) {
+          return { code: c.code, name: c.name, qty: c.qty, unitPrice: c.price, unit: c.unit };
+        }) : null;
         quoteSelectedItems.push({
           catalogIdx: catalogIdx, qty: 1, priceType: 'giorno',
-          unitPrice: item.prices.giorno, discountPct: 0
+          unitPrice: item.prices.giorno, discountPct: 0,
+          fixedDiscount: 0, priceManual: false, manualPrice: 0,
+          iva: 22, composito: compRighe, note: ''
         });
       }
       quoteRenderSelected();
@@ -3767,7 +4190,9 @@
         var qty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
         quoteSelectedItems.push({
           catalogIdx: catalogIdx, qty: qty, priceType: 'giorno',
-          unitPrice: item.prices.giorno, discountPct: 0
+          unitPrice: item.prices.giorno, discountPct: 0,
+          fixedDiscount: 0, priceManual: false, manualPrice: 0,
+          iva: 22, composito: null, note: ''
         });
       }
       quoteRenderSelected();
@@ -3794,14 +4219,18 @@
       var countEl = document.getElementById('q-sel-count');
       if (countEl) countEl.textContent = quoteSelectedItems.length;
       if (quoteSelectedItems.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Nessun articolo selezionato. Clicca "Aggiungi articoli" per aprire il catalogo.</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Nessun articolo selezionato. Clicca "Aggiungi articoli" per aprire il catalogo.</td></tr>';
         return;
       }
       var dateRange = quoteGetEventDateRange();
       var html = '';
       quoteSelectedItems.forEach(function(sel, i) {
         var item = QUOTE_CATALOG[sel.catalogIdx];
-        var lineTotal = sel.qty * sel.unitPrice * (1 - sel.discountPct / 100);
+        var effectivePrice = sel.priceManual ? sel.manualPrice : sel.unitPrice;
+        var lineGross = sel.qty * effectivePrice;
+        var lineDiscount = lineGross * sel.discountPct / 100 + (sel.fixedDiscount || 0);
+        var lineTotal = lineGross - lineDiscount;
+        var noteShort = sel.note ? sel.note.substring(0, 20) : '';
         var av = quoteCalcAvailability(item, dateRange);
         var qtyClass = 'q-sel-qty', warnPill = '';
         if (sel.qty > av.freeVero) {
@@ -3817,6 +4246,8 @@
         html += '<tr>';
         html += '<td><img src="' + item.img + '" style="width:28px;height:28px;border-radius:4px;object-fit:cover;" onerror="this.style.display=\'none\'" /></td>';
         html += '<td><strong>' + item.name + '</strong> <span style="color:var(--muted);font-size:11px;">' + item.code + '</span>';
+        if (sel.composito) html += '<span class="comp-badge">Composito</span>';
+        if (sel.note) html += '<div style="font-size:11px;color:var(--muted);margin-top:2px;font-style:italic;">📝 ' + noteShort + (sel.note.length > 20 ? '…' : '') + '</div>';
         html += '<div style="margin-top:3px;"><span class="sel-avail-badge" style="background:color-mix(in oklch, var(--success) 10%, transparent);color:var(--success);" title="Impegnato vero: ' + av.vero + '">V ' + av.vero + '</span>';
         html += '<span class="sel-avail-badge" style="background:color-mix(in oklch, var(--warn) 10%, transparent);color:oklch(50% 0.14 80);" title="Impegnato teorico: ' + av.teorico + '">T ' + av.teorico + '</span>';
         html += '<span class="sel-avail-badge" style="background:color-mix(in oklch, oklch(55% 0.15 250) 10%, transparent);color:oklch(45% 0.15 250);" title="Impegnato probabile: ' + av.probabile + '">P ' + av.probabile + '</span>';
@@ -3827,11 +4258,34 @@
           html += '<option value="' + t.k + '"' + (sel.priceType === t.k ? ' selected' : '') + '>' + t.l + '</option>';
         });
         html += '</select></td>';
-        html += '<td class="num"><span style="font-family:var(--font-mono);font-size:12px;">€ ' + sel.unitPrice.toFixed(2).replace('.', ',') + '</span></td>';
-        html += '<td class="num"><input class="q-sel-discount" type="number" min="0" max="100" value="' + sel.discountPct + '" onchange="quoteUpdateDiscount(' + i + ', this.value)" /></td>';
+        if (sel.priceManual) {
+          html += '<td class="num"><input class="q-sel-price-manual" type="number" min="0.01" step="0.01" value="' + sel.manualPrice.toFixed(2) + '" onchange="quoteUpdateManualPrice(' + i + ', this.value)" /></td>';
+        } else {
+          html += '<td class="num"><span style="font-family:var(--font-mono);font-size:12px;">€ ' + effectivePrice.toFixed(2).replace('.', ',') + '</span>';
+          html += ' <button class="sel-price-ovr-btn" onclick="quoteToggleManualPrice(' + i + ')" title="Override prezzo">✏️</button></td>';
+        }
+        html += '<td class="num" style="vertical-align:middle;"><div>' +
+          '<input class="q-sel-discount" type="number" min="0" max="100" value="' + sel.discountPct + '" onchange="quoteUpdateDiscount(' + i + ', this.value)" style="width:40px;" title="% sconto" />' +
+          (sel.fixedDiscount > 0 ? '<br><span style="font-size:10px;color:var(--danger);font-family:var(--font-mono);">−€' + sel.fixedDiscount.toFixed(2).replace('.',',') + '</span>' : '') +
+          '</div></td>';
+        html += '<td class="num"><select class="q-sel-iva" onchange="quoteUpdateIVA(' + i + ', this.value)">' +
+          '<option value="22"' + (sel.iva === 22 ? ' selected' : '') + '>22%</option>' +
+          '<option value="4"' + (sel.iva === 4 ? ' selected' : '') + '>4%</option>' +
+          '<option value="0"' + (sel.iva === 0 ? ' selected' : '') + '>Esente</option>' +
+          '</select></td>';
         html += '<td class="num" style="font-weight:600;font-family:var(--font-mono);">€ ' + lineTotal.toFixed(2).replace('.', ',') + '</td>';
         html += '<td><button class="q-sel-remove" onclick="quoteRemoveItem(' + i + ')">✕</button></td>';
         html += '</tr>';
+        // Composito sub-righe
+        if (sel.composito) {
+          sel.composito.forEach(function(cr) {
+            var subQty = cr.qty * sel.qty;
+            var subTotal = subQty * cr.unitPrice;
+            html += '<tr class="comp-sub-row"><td></td><td colspan="2">↳ ' + cr.name + ' <span style="color:var(--muted);font-size:11px;">' + cr.code + '</span></td>';
+            html += '<td class="num">x' + cr.qty + '/' + cr.unit + '</td><td class="num">€ ' + cr.unitPrice.toFixed(2).replace('.',',') + '</td>';
+            html += '<td class="num">—</td><td></td><td class="num">€ ' + subTotal.toFixed(2).replace('.',',') + '</td><td></td></tr>';
+          });
+        }
       });
       tbody.innerHTML = html;
     }
@@ -3855,21 +4309,84 @@
       quoteRenderSelected(); quoteRecalcTotals();
     }
 
+    function quoteUpdateFixedDiscount(idx, val) {
+      quoteSelectedItems[idx].fixedDiscount = Math.max(0, parseFloat(val) || 0);
+      quoteRenderSelected(); quoteRecalcTotals();
+    }
+
+    function quoteUpdateIVA(idx, val) {
+      quoteSelectedItems[idx].iva = parseInt(val) || 22;
+      quoteRenderSelected(); quoteRecalcTotals();
+    }
+
+    function quoteToggleManualPrice(idx) {
+      var sel = quoteSelectedItems[idx];
+      sel.priceManual = !sel.priceManual;
+      if (sel.priceManual) sel.manualPrice = sel.unitPrice;
+      quoteRenderSelected(); quoteRecalcTotals();
+    }
+
+    function quoteUpdateManualPrice(idx, val) {
+      quoteSelectedItems[idx].manualPrice = Math.max(0.01, parseFloat(val) || 0);
+      quoteRecalcTotals();
+    }
+
+    function quoteUpdateItemNote(idx) {
+      var item = QUOTE_CATALOG[quoteSelectedItems[idx].catalogIdx];
+      var note = prompt('Nota per "' + item.name + '":', quoteSelectedItems[idx].note || '');
+      if (note !== null) { quoteSelectedItems[idx].note = note; quoteRenderSelected(); }
+    }
+
     function quoteRecalcTotals() {
-      var subtotal = 0, rowDiscount = 0;
+      var subtotal = 0, rowDiscount = 0, fixedDiscount = 0;
+      var ivaBuckets = {};
       quoteSelectedItems.forEach(function(sel) {
-        var lineGross = sel.qty * sel.unitPrice;
+        var effectivePrice = sel.priceManual ? sel.manualPrice : sel.unitPrice;
+        var lineGross = sel.qty * effectivePrice;
+        var pctAmt = lineGross * sel.discountPct / 100;
+        var fixedAmt = sel.fixedDiscount || 0;
         subtotal += lineGross;
-        rowDiscount += lineGross * sel.discountPct / 100;
+        rowDiscount += pctAmt;
+        fixedDiscount += fixedAmt;
+        var net = lineGross - pctAmt - fixedAmt;
+        var key = sel.iva || 22;
+        ivaBuckets[key] = (ivaBuckets[key] || 0) + net;
       });
-      var afterRow = subtotal - rowDiscount;
+      var afterRow = subtotal - rowDiscount - fixedDiscount;
       var globalPct = parseFloat(document.getElementById('q-global-discount').value) || 0;
       var globalDiscount = afterRow * globalPct / 100;
       var total = afterRow - globalDiscount;
+      var ivaTot = 0;
+      Object.keys(ivaBuckets).forEach(function(k) {
+        ivaTot += ivaBuckets[k] * parseInt(k) / 100;
+      });
+      var totalIva = total + ivaTot;
+
       document.getElementById('q-subtotal').textContent = '€ ' + subtotal.toFixed(2).replace('.', ',');
-      document.getElementById('q-row-discount').textContent = '− € ' + rowDiscount.toFixed(2).replace('.', ',');
+      document.getElementById('q-row-discount').textContent = '− € ' + (rowDiscount + fixedDiscount).toFixed(2).replace('.', ',');
       document.getElementById('q-global-discount-amt').textContent = '− € ' + globalDiscount.toFixed(2).replace('.', ',');
       document.getElementById('q-total').textContent = '€ ' + total.toFixed(2).replace('.', ',');
+      // Add IVA detail row if not present
+      var box = document.querySelector('.q-summary-box');
+      var existingIva = document.getElementById('q-iva-detail');
+      if (!existingIva) {
+        var div = document.createElement('div');
+        div.className = 'q-summary-iva-detail';
+        div.id = 'q-iva-detail';
+        box.appendChild(div);
+        existingIva = div;
+      }
+      var ivaHtml = '';
+      Object.keys(ivaBuckets).forEach(function(k) {
+        var imp = ivaBuckets[k];
+        var netRiga = imp - globalDiscount * imp / afterRow;
+        var imponibile = netRiga; // simplified apportionment
+        ivaHtml += '<div class="iva-line"><span>IVA ' + k + '%</span><span>€ ' + (ivaBuckets[k] * k / 100).toFixed(2).replace('.',',') + '</span></div>';
+      });
+      existingIva.innerHTML = ivaHtml;
+      // Store for final
+      window._quoteIvaTot = ivaTot;
+      window._quoteTotalIva = totalIva;
     }
 
     function quoteBuildFinal() {
@@ -3890,17 +4407,52 @@
       html += '<div class="q-final-row"><span class="f-label">Giorni</span><span class="f-val">' + days + '</span></div>';
       if (notes) html += '<div class="q-final-row"><span class="f-label">Note</span><span class="f-val">' + notes + '</span></div>';
       html += '</div>';
-      var subtotal = 0, rowDiscount = 0;
-      quoteSelectedItems.forEach(function(sel) { subtotal += sel.qty * sel.unitPrice; rowDiscount += sel.qty * sel.unitPrice * sel.discountPct / 100; });
-      var afterRow = subtotal - rowDiscount;
+
+      // Logistics card (step 3)
+      var vol = document.getElementById('log-vol-tot');
+      if (vol) {
+        var volVal = vol.textContent;
+        var pesoVal = document.getElementById('log-vol-peso').textContent;
+        var colliVal = document.getElementById('log-vol-colli').textContent;
+        var palletVal = document.getElementById('log-vol-pallet').textContent;
+        var viaggiVal = document.getElementById('log-vol-viaggi').textContent;
+        html += '<div class="q-final-card"><h4>Logistica</h4>';
+        html += '<div class="q-final-row"><span class="f-label">Volume</span><span class="f-val">' + volVal + ' m³</span></div>';
+        html += '<div class="q-final-row"><span class="f-label">Peso</span><span class="f-val">' + pesoVal + ' kg</span></div>';
+        html += '<div class="q-final-row"><span class="f-label">Colli</span><span class="f-val">' + colliVal + '</span></div>';
+        html += '<div class="q-final-row"><span class="f-label">Pallet stimati</span><span class="f-val">' + palletVal + '</span></div>';
+        html += '<div class="q-final-row"><span class="f-label">Viaggi stimati</span><span class="f-val">' + viaggiVal + '</span></div>';
+        html += '</div>';
+      }
+
+      var subtotal = 0, rowDiscount = 0, fixedDiscount = 0;
+      var ivaBuckets = {};
+      quoteSelectedItems.forEach(function(sel) {
+        var ep = sel.priceManual ? sel.manualPrice : sel.unitPrice;
+        var g = sel.qty * ep;
+        subtotal += g;
+        rowDiscount += g * sel.discountPct / 100;
+        fixedDiscount += sel.fixedDiscount || 0;
+        var net = g * (1 - sel.discountPct / 100) - (sel.fixedDiscount || 0);
+        var key = sel.iva || 22;
+        ivaBuckets[key] = (ivaBuckets[key] || 0) + net;
+      });
+      var afterRow = subtotal - rowDiscount - fixedDiscount;
       var globalPct = parseFloat(document.getElementById('q-global-discount').value) || 0;
       var globalDiscount = afterRow * globalPct / 100;
       var total = afterRow - globalDiscount;
+      var ivaTot = 0;
+      Object.keys(ivaBuckets).forEach(function(k) { ivaTot += ivaBuckets[k] * parseInt(k) / 100; });
       html += '<div class="q-final-card"><h4>Riepilogo Costi</h4>';
       html += '<div class="q-final-row"><span class="f-label">Subtotale</span><span class="f-val">€ ' + subtotal.toFixed(2).replace('.', ',') + '</span></div>';
-      html += '<div class="q-final-row"><span class="f-label">Sconto righe</span><span class="f-val" style="color:var(--danger);">− € ' + rowDiscount.toFixed(2).replace('.', ',') + '</span></div>';
-      html += '<div class="q-final-row"><span class="f-label">Sconto globale (' + globalPct + '%)</span><span class="f-val" style="color:var(--danger);">− € ' + globalDiscount.toFixed(2).replace('.', ',') + '</span></div>';
-      html += '<div class="q-final-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:6px;"><span class="f-label" style="font-weight:600;">Totale</span><span class="f-val" style="font-size:18px;color:var(--accent);">€ ' + total.toFixed(2).replace('.', ',') + '</span></div>';
+      if (rowDiscount > 0) html += '<div class="q-final-row"><span class="f-label">Sconto % righe</span><span class="f-val" style="color:var(--danger);">− € ' + rowDiscount.toFixed(2).replace('.', ',') + '</span></div>';
+      if (fixedDiscount > 0) html += '<div class="q-final-row"><span class="f-label">Sconto fisso righe</span><span class="f-val" style="color:var(--danger);">− € ' + fixedDiscount.toFixed(2).replace('.', ',') + '</span></div>';
+      if (globalPct > 0) html += '<div class="q-final-row"><span class="f-label">Sconto globale (' + globalPct + '%)</span><span class="f-val" style="color:var(--danger);">− € ' + globalDiscount.toFixed(2).replace('.', ',') + '</span></div>';
+      html += '<div class="q-final-row"><span class="f-label">Imponibile</span><span class="f-val">€ ' + total.toFixed(2).replace('.', ',') + '</span></div>';
+      Object.keys(ivaBuckets).forEach(function(k) {
+        html += '<div class="q-final-row"><span class="f-label">IVA ' + k + '%</span><span class="f-val" style="color:var(--muted);">€ ' + (ivaBuckets[k] * k / 100).toFixed(2).replace('.',',') + '</span></div>';
+      });
+      html += '<div class="q-final-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:6px;"><span class="f-label" style="font-weight:600;">Totale</span><span class="f-val" style="font-size:18px;color:var(--accent);">€ ' + (total + ivaTot).toFixed(2).replace('.', ',') + '</span></div>';
       html += '<div class="q-final-row"><span class="f-label">Articoli</span><span class="f-val">' + quoteSelectedItems.length + '</span></div>';
       html += '<div class="q-final-row"><span class="f-label">Pezzi totali</span><span class="f-val">' + quoteSelectedItems.reduce(function(a, s) { return a + s.qty; }, 0) + '</span></div>';
       html += '</div>';
@@ -3909,12 +4461,15 @@
       var rowsHtml = '';
       quoteSelectedItems.forEach(function(sel) {
         var item = QUOTE_CATALOG[sel.catalogIdx];
-        var lineTotal = sel.qty * sel.unitPrice * (1 - sel.discountPct / 100);
+        var ep = sel.priceManual ? sel.manualPrice : sel.unitPrice;
+        var lineTotal = sel.qty * ep * (1 - sel.discountPct / 100) - (sel.fixedDiscount || 0);
         var typeLabel = sel.priceType === 'giorno' ? 'Giorno' : sel.priceType === '3gg' ? '3 Giorni' : sel.priceType === 'settimana' ? 'Settimana' : 'Forfait';
+        var ivaLabel = sel.iva === 0 ? 'Esente' : sel.iva + '%';
         rowsHtml += '<tr><td>' + item.name + ' <span style="color:var(--muted);font-size:11px;">' + item.code + '</span></td>';
         rowsHtml += '<td class="num">' + sel.qty + '</td><td>' + typeLabel + '</td>';
-        rowsHtml += '<td class="num">€ ' + sel.unitPrice.toFixed(2).replace('.', ',') + '</td>';
-        rowsHtml += '<td class="num">' + (sel.discountPct > 0 ? sel.discountPct + '%' : '—') + '</td>';
+        rowsHtml += '<td class="num">€ ' + ep.toFixed(2).replace('.', ',') + '</td>';
+        rowsHtml += '<td class="num">' + (sel.discountPct > 0 ? sel.discountPct + '%' : sel.fixedDiscount > 0 ? '−€' + sel.fixedDiscount.toFixed(2).replace('.',',') : '—') + '</td>';
+        rowsHtml += '<td class="num">' + ivaLabel + '</td>';
         rowsHtml += '<td class="num" style="font-weight:600;">€ ' + lineTotal.toFixed(2).replace('.', ',') + '</td></tr>';
       });
       tbody.innerHTML = rowsHtml;

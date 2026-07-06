@@ -1,8 +1,8 @@
 # Specifica Tecnica — Prototipo Gestione Noleggi Oltre Il Giardino SRL
 
-> **Versione:** 2.1  
-> **Data:** 24/06/2026  
-> **Stato:** Specifica aggiornata v2.1 — Architettura documentale corretta  
+> **Versione:** 2.2  
+> **Data:** 06/07/2026  
+> **Stato:** Specifica aggiornata v2.2 — IVA, sconto fisso, compositi, logistica, pagamenti, anagrafica/movimenti prodotto  
 > **Prossimo passo:** Validazione prototipo → Sviluppo Fase 1
 
 ---
@@ -1071,7 +1071,7 @@ Ogni card contiene:
 
 #### 8.3.3 Dettaglio Prodotto (`page-dettaglio-prodotto`)
 
-**Purpose:** Vista completa di un prodotto con info anagrafiche, stato disponibilità e diagramma Gantt degli impegni. È la schermata più complessa del prototipo.
+**Purpose (v2.2):** Vista completa di un prodotto con schede multiple: Dettaglio (disponibilità, Gantt), Anagrafica (fornitore, posizione, dimensioni), Movimenti (entrate/uscite per evento con saldo progressivo).
 
 **Layout:**
 - Topbar: breadcrumb "← Catalogo" + nome prodotto + pulsanti "Modifica" e "Verifica Disponibilità"
@@ -1079,7 +1079,12 @@ Ogni card contiene:
 - Gantt chart interattivo (sezione piena larghezza)
 - Legenda impegni + riepilogo disponibilità (griglia 2 colonne)
 
-**Sezione A — Griglia 2:1 (Immagine + Info | Stats)**
+**Sezione A — Tab Navigator (v2.2):** Il dettaglio prodotto ora ha 3 tab selezionabili nella parte superiore:
+- **Dettaglio** (active default) — vista originale con immagine, info, stats, Gantt
+- **Anagrafica** — scheda fornitore (nome, contatti, data acquisto, costo acquisto), posizione magazzino (fila, scaffale, corsia), dimensioni (L×P×H cm, peso unitario), note logistiche
+- **Movimenti** — tabella cronologica entrate/uscite per evento con data, tipo (Uscita/Rientro/Acquisto/Manutenzione), quantità, saldo progressivo
+
+**Sezione B — Griglia 2:1 (Immagine + Info | Stats)**
 
 *Colonna sinistra (2/3):*
 
@@ -1268,13 +1273,13 @@ Ogni riga evento mostra:
 
 ##### 8.3.5a Modale "Nuovo Preventivo" (overlay multi-step)
 
-**Purpose:** Wizard di creazione preventivo in 3 step, accessibile da Dashboard e Preventivi.
+**Purpose (v2.2):** Wizard di creazione preventivo in **4 step**, accessibile da Dashboard e Preventivi.
 
 **Struttura:**
 - Overlay fullscreen con backdrop blur, chiusura con ✕, click fuori, o Esc
 - Header: titolo "Nuovo Preventivo" + pulsante ✕
-- Indicatore step: 3 pill cerchiati (1 Dati ordine → 2 Righe ordine → 3 Riepilogo)
-- Body scrollabile + footer con pulsanti "← Indietro" / "Continua →"
+- Indicatore step: 4 pill cerchiati (1 Dati ordine → 2 Righe ordine → 3 Logistica → 4 Riepilogo)
+- Body scrollabile + footer con pulsanti "← Indietro" / "Continua →" / "Crea preventivo"
 
 **Step 1 — Dati ordine:**
 
@@ -1288,22 +1293,23 @@ Ogni riga evento mostra:
 | Giorni noleggio | `number` | Sì | Default 1, min 1, max 30 |
 | Note | `textarea` | No | Accesso, parcheggio, note logistiche |
 
-**Step 2 — Righe ordine:**
+**Step 2 — Righe ordine (v2.2 arricchito):**
 
 - **Pulsante "+ Aggiungi articoli"** → apre modale secondaria "Righe ordine"
 - **Griglia articoli selezionati:** tabella con colonne:
-  - Thumbnail, Nome + Codice + badge disponibilità (`V N / T N / P N / Tot: N`), Qtà (input number con warning disponibilità), Tariffa (select: Giorno/3gg/Settimana/Forfait), Prezzo unitario, Sconto % (input), Totale riga, Pulsante rimuovi ✕
+  - Thumbnail, Nome + Codice + badge disponibilità (`V N / T N / P N / Tot: N`), Qtà (input number con warning disponibilità), Tariffa (select: Giorno/3gg/Settimana/Forfait), Prezzo unitario (con toggle manual ✏️), IVA (select: 22% / 4% / Esente), Sconto % (input), Sconto importo fisso (input), Note prodotto (input text), Totale riga, Pulsante rimuovi ✕
 - **Badge disponibilità per riga:** sotto nome e codice, 4 badge inline:
   - `V N` (verde) = pezzi liberi considerando solo impegnato vero
   - `T N` (arancio) = pezzi liberi considerando impegnato teorico
   - `P N` (blu) = pezzi liberi considerando impegnato probabile
   - `/ Tot: N` = quantità totale a magazzino
+- **Prodotti composti (v2.2):** se l'articolo è un `composito` (es. Bancone Pallet), sotto la riga principale appaiono sotto-righe indentate con codice, nome, qty, prezzo unitario, sotto-totale
 - **Warning disponibilità sulla qtà:** quando la quantità inserita supera una soglia di disponibilità, l'input mostra:
   - Bordo + sfondo colorato (verde/arancio/blu) in base al livello superato
   - Pilloletta sotto l'input: "▲ Supera vero/teorico/probabile (N liberi)"
   - Si aggiorna dinamicamente quando cambia la data evento o i giorni
 - **Sconto globale:** input percentuale applicato a tutte le righe
-- **Riepilogo:** Subtotale, Sconto righe, Sconto globale, Totale
+- **Riepilogo:** Subtotale, Sconto righe, Sconto globale, Totale (con dettaglio IVA)
 - **Conteggio articoli** visibile nella testata della griglia
 
 ##### 8.3.5b Modale "Righe ordine" (overlay secondaria)
@@ -1327,10 +1333,16 @@ Ogni riga evento mostra:
 - La qtà inserita viene riportata nella griglia step 2 quando l'articolo viene aggiunto
 - Chiusura con ✕, Esc, o pulsante "Chiudi"
 
-**Step 3 — Riepilogo:**
+**Step 3 — Logistica (nuovo v2.2):**
+- **Selezione contenitori:** checkbox + input qty per tipi predefiniti (Cassa media/grande, Baule cristallo, Pallet EU/industriale, Carrello appendiabiti/piatto)
+- **Calcolatore automatico:** volume totale, peso totale, colli, pallet necessari, viaggi stimati (formula: volume / portata / capienza furgone)
+- **Vincoli consegna:** ZTL (testo libero), serve muletto? (Sì/No toggle), personale carico/scarico (input), note trasportatore (textarea)
+
+**Step 4 — Riepilogo (v2.2 arricchito):**
 - Card "Dati Evento": data, evento, cliente, venue, referente, giorni, note
-- Card "Riepilogo Costi": subtotali, sconti, totale, conteggio articoli/pezzi
-- Tabella righe complete: articolo, qtà, tariffa, prezzo ud., sconto, totale riga
+- Card "Riepilogo Costi": subtotali per aliquota IVA + totale IVA + totale finale
+- Card "Logistica": contenitori selezionati, volume, peso, colli, pallet, viaggi, vincoli consegna
+- Tabella righe complete: articolo, qtà, tariffa, prezzo ud., IVA, sconto %, sconto fisso, totale riga
 
 **Logica disponibilità:**
 - La disponibilità si calcola in base alla data evento selezionata e ai giorni di noleggio
@@ -1512,6 +1524,37 @@ Form strutturato per raccogliere feedback post-evento e addestrare l'AI sull'ido
 - I tag AI alimentano il calcolo dell'impegnato probabile nei preventivi
 - Le stelle sono interattive: click aggiorna immediatamente lo stato visivo
 
+**Sezione G — Pagamenti (nuovo v2.2):**
+
+Tabella storico pagamenti per l'ordine:
+
+| Colonna | Tipo | Formato |
+|---|---|---|
+| Tipo | testo | Bonifico / Assegno / RID / Contanti |
+| Data pagamento | monospace | `DD/MM/YYYY` o `—` |
+| Importo | monospace grassetto | `€ X.XXX,XX` |
+| Stato | pill | `pagato` (verde) / `in_attesa` (giallo) |
+| Scadenza | monospace | `DD/MM/YYYY` |
+
+Pulsanti azione: "+ Registra pagamento", "Storico cliente" (entrambi placeholder).
+
+**Struttura dati:** ogni ordine ha `payments: [{ type, date, amount, status, statusCls, scadenza }]`
+
+**Sezione H — Documento Logistico (nuovo v2.2):**
+
+Form con campi editabili (input):
+
+| Campo | Tipo |
+|---|---|
+| ZTL / Aree regolamentate | input text |
+| Serve muletto | input text (Sì/No) |
+| Personale carico/scarico | input text |
+| Note trasportatore | input text |
+
+Pulsante "📄 Scarica PDF" (placeholder).
+
+**Struttura dati:** ogni ordine ha `docLog: { ztl, muletto, personale, note }`
+
 **API necessarie:**
 - `GET /ordini/:id` → dati ordine + righe
 - `GET /ordini/:id/documenti` → documenti contabili dal gestionale
@@ -1519,6 +1562,10 @@ Form strutturato per raccogliere feedback post-evento e addestrare l'AI sull'ido
 - `POST /ordini/:id/foto` → upload foto (multipart/form-data)
 - `GET /ordini/:id/questionario` → dati questionario AI
 - `PUT /ordini/:id/questionario` → salva/aggiorna questionario
+- `GET /ordini/:id/pagamenti` → storico pagamenti ordine
+- `POST /ordini/:id/pagamenti` → registra nuovo pagamento
+- `GET /ordini/:id/documento-logistico` → documento logistico
+- `PUT /ordini/:id/documento-logistico` → aggiorna documento logistico
 
 **Interazioni:**
 - Click ✕ / click fuori / Esc → chiudi modale
@@ -1624,9 +1671,24 @@ Tabella che mostra i riferimenti ai documenti contabili generati dal gestionale:
 | Ricerca | `input text` | Per ragione sociale, P.IVA, referente |
 | Stato | `select` | Tutti, Attivi, Inattivi |
 
+**Sezione aggiuntiva v2.2 — Storico Pagamenti Cliente:**
+
+Tabella con gli ultimi 6 movimenti di pagamento del cliente selezionato (Rossi Srl nel prototipo):
+
+| Colonna | Tipo | Formato |
+|---|---|---|
+| Data | monospace | `DD/MM/YYYY` o `—` |
+| Tipo | testo | Bonifico / Assegno / RID / Contanti |
+| Ordine | monospace link | `#YYYY/NNN` |
+| Evento | testo | Nome evento |
+| Importo | monospace grassetto | `€ X.XXX,00` |
+| Stato | pill | `pagato` (verde) / `in_attesa` (giallo) |
+| Scadenza | monospace | `DD/MM/YYYY` |
+
 **API necessarie:**
 - `GET /clienti?page=N&limit=20&q=testo&stato=X` → lista paginata
 - `POST /integrazione/sync-clienti` → sincronizzazione gestionale
+- `GET /clienti/:id/pagamenti?limit=N` → storico pagamenti cliente
 
 **Interazioni:**
 - Click "Apri →" → dettaglio cliente (non prototipato)
@@ -1677,31 +1739,31 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 
 | Funzionalità | Stato attuale | Modifica necessaria |
 |---|---|---|
-| **Logistica nel preventivo** | Non presente | Nuovo Step 2b: casse/ceste/pallet, calcolo volume, form vincoli consegna (ZTL, orari, muletti) |
-| **Modifica manuale importi** | Parziale (sconto %) | Checkbox "Prezzo manuale" per riga → sblocca input e disabilita calcolo automatico |
+| **Logistica nel preventivo** | ✅ **Prototipato v2.2** | Step 3 dedicato: selezione contenitori (casse/pallet/carrelli), calcolatore volume/peso/colli, form vincoli consegna (ZTL, orari, muletti, personale) |
+| **Modifica manuale importi** | ✅ **Prototipato v2.2** | Toggle ✏️ per riga → sblocca input prezzo manuale e disabilita calcolo automatico da tariffa |
 | **Modifica immagini prodotto** | Non permessa | Le immagini sono dell'anagrafica prodotto, modificabili solo in anagrafica (non in fase di preventivo) |
-| **Prodotti composti** | Non gestito | Nuovo tipo `composito`: articolo padre con sotto-righe (es. Bancone Pallet = piano legno + cavalletti × 2). In preventivo si espande con proprie qtà e disponibilità |
-| **Note ai singoli prodotti** | Non presente | Campo `note` testuale per ogni riga ordine, visibile in tabella e riepilogo stampabile |
-| **Sconto per riga** | Già presente (%) | Aggiungere anche sconto in **importo fisso** oltre alla percentuale |
+| **Prodotti composti** | ✅ **Prototipato v2.2** | Nuovo tipo `composito`: articolo padre con sotto-righe (es. Bancone Pallet = piano legno + cavalletti × 2). In preventivo si espande con proprie qtà, prezzi unitari e sotto-totale. Aggiunto Bancone Pallet a catalogo |
+| **Note ai singoli prodotti** | ✅ **Prototipato v2.2** | Campo `note` testuale per ogni riga, visibile in tabella e riepilogo |
+| **Sconto per riga** | ✅ **Prototipato v2.2** | % + **importo fisso** per riga |
 | **Sconto globale** | Già presente | Nessuna modifica |
-| **IVA / non IVA** | Non gestito | Nuova colonna "Aliquota IVA" per riga (22%, 10%, 4%, 0% esente). Subtotale imponibile + IVA + totale nel riepilogo |
-| **Pagamenti e storico** | Non presente | Nuova sezione Pagamenti nell'ordine + storico pagamenti nell'anagrafica cliente |
+| **IVA / non IVA** | ✅ **Prototipato v2.2** | Nuova colonna "IVA" per riga (22%, 4%, esente). Riepilogo IVA con dettaglio per aliquota (imponibile + IVA per ciascuna) + totali finali |
+| **Pagamenti e storico** | ✅ **Prototipato v2.2** | Nuova sezione Pagamenti nell'ordine + storico pagamenti nell'anagrafica cliente (tabella con data, tipo, importo, stato, scadenza) + pulsanti "Registra pagamento" e "Storico cliente" |
 | **Generazione DDT/Fattura** | **Non di competenza di questo sistema** | I documenti contabili (DDT, fatture, note credito) sono **generati dal gestionale esterno**. Questo sistema comunica lo stato ordine, il gestionale genera i documenti e li restituisce come riferimenti (codice, data, pdf_url). Vedi §2.4 per lo schema d'integrazione. |
 
 ### 11.2 Catalogo Prodotti — Integrazioni richieste
 
 | Funzionalità | Stato attuale | Modifica necessaria |
 |---|---|---|
-| **Anagrafica dettagliata** | Parziale | Nuova scheda "Anagrafica" nel dettaglio prodotto: fornitore (nome, contatti, data acquisto, costo acquisto), posizione magazzino, note logistiche |
-| **Tabella entrate/uscite per evento** | Non presente | Nuova tab "Movimenti": tabella cronologica con evento/qta/tipo (uscita/rientro/acquisto/manutenzione), saldo progressivo stile Excel |
+| **Anagrafica dettagliata** | ✅ **Prototipato v2.2** | Nuova scheda "Anagrafica" nel dettaglio prodotto: fornitore (nome, contatti, data acquisto, costo acquisto), posizione magazzino, dimensioni/peso, note logistiche |
+| **Tabella entrate/uscite per evento** | ✅ **Prototipato v2.2** | Nuova tab "Movimenti": tabella cronologica con evento/qtà/tipo (uscita/rientro/acquisto/manutenzione), saldo progressivo |
 
 ### 11.3 Logistica — Nuove funzionalità
 
 | Funzionalità | Descrizione |
 |---|---|
-| **Casse / Ceste / Pallet** | Nuova anagrafica "Contenitori": codice, tipo (cassa/cesto/baule/pallet/carrello), dimensioni, peso, portata. Associabili ai prodotti in fase di preventivo |
-| **Calcolo volumi** | Ogni articolo ha dimensioni (L×P×H cm) e peso. Il preventivo calcola automaticamente volume totale = Σ(qtà × volume_unitario) e peso totale |
-| **Documento logistico** | Form da compilare nell'ordine: ZTL (orari), Area C, muletti, personale carico/scarico, piano consegna, ascensore, note trasportatore. PDF esportabile |
+| **Casse / Ceste / Pallet** | ✅ **Prototipato v2.2** — Nuova anagrafica "Contenitori" nella pagina Logistica: 7 tipi (cassa media/grande, baule cristallo, pallet EU/industriale, carrello appendiabiti/piatto) con codice, tipo, dimensioni, volume, peso, carico max, quantità. Associabili ai prodotti in fase di preventivo (Step 3) |
+| **Calcolo volumi** | ✅ **Prototipato v2.2** — Calcolatore automatico nel wizard: volume totale, peso totale, colli, pallet necessari, viaggi stimati. Mostrato nel riepilogo preventivo |
+| **Documento logistico** | ✅ **Prototipato v2.2** — Form nell'ordine: ZTL (libero testo), serve muletto (Sì/No), personale carico/scarico, note trasportatore. Pulsante "Scarica PDF" (placeholder). Dati via `docLog` nell'oggetto ordine |
 
 ### 11.4 Offerta / Carrello Sito
 
@@ -1722,13 +1784,13 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 
 | Priorità | Funzionalità | Fase |
 |---|---|---|
-| P0 | Logistica (Step 2b + Volume) | Step successivo al prototipo |
-| P0 | IVA / esenzione per riga | Step successivo al prototipo |
-| P0 | Sconto importo fisso per riga | Step successivo al prototipo |
-| P1 | Prodotti composti (anagrafica + espansione) | Fase 1 |
-| P1 | Pagamenti e storico | Fase 1 |
-| P1 | Anagrafica dettagliata + Movimenti catalogo | Fase 1 |
-| P2 | Documento logistico PDF | Fase 2 |
+| P0 | Logistica (Step 3 + Volume) | ✅ **Prototipato v2.2** |
+| P0 | IVA / esenzione per riga | ✅ **Prototipato v2.2** |
+| P0 | Sconto importo fisso per riga | ✅ **Prototipato v2.2** |
+| P1 | Prodotti composti (anagrafica + espansione) | ✅ **Prototipato v2.2** |
+| P1 | Pagamenti e storico | ✅ **Prototipato v2.2** |
+| P1 | Anagrafica dettagliata + Movimenti catalogo | ✅ **Prototipato v2.2** |
+| P2 | Documento logistico PDF | Fase 2 (placeholder presente) |
 | P2 | Documenti contabili (ricezione riferimenti dal gestionale) | Fase 2 |
 | P2 | Integrazione gestionale (sync stati ordine) | Fase 2 |
 | P2 | Note operative materiali lasciati | Fase 2 |
@@ -1795,10 +1857,9 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 ### 15.1 File e Struttura
 
 | File | Descrizione |
-|---|---|
-| `index.html` | Pagina launcher/overview con 8 card che linkano alle singole schermate del prototipo + note demo + footer |
-| `app.html` | Prototipo principale — SPA completa con 8 pagine + 2 modali, supporto parametri URL (`?page=X`) + footer |
-| `oltre-il-giardino-gestione-noleggi.html` | Copia di backup della SPA (stessa struttura di app.html) |
+|---|---|---|
+| `index.html` | Pagina launcher/overview con 8 card che linkano alle singole schermate del prototipo + note demo + footer *(non aggiornato in v2.2 — puntare direttamente ad app.html)* |
+| `app.html` | Prototipo principale — SPA completa con 9 pagine (Dashboard, Catalogo, Dettaglio Prodotto, Calendario Eventi, Preventivi, Ordini, Logistica, Clienti) + 4 aree modali (dettaglio ordine, wizard preventivo, modale prodotto, zoom foto), supporto parametri URL (`?page=X`) + footer |
 | `assets/images/` | 44 immagini prodotto/categoria/hero/logo scaricate da oltreilgiardino.biz |
 
 **Parametri URL supportati:** `app.html?page=dashboard` | `catalogo` | `dettaglio-prodotto` | `calendario` | `preventivi` | `ordini` | `logistica` | `clienti`
@@ -1850,6 +1911,11 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 - `.gantt-wrap` / `.gantt-toolbar` / `.gantt-viewport` / `.gantt` / `.gantt-bar` / `.gantt-legend`
 - `.om-photos-grid` / `.om-photo-thumb` / `.om-photo-upload` / `.om-photo-zoom-overlay`
 - `.om-ai-section` / `.om-ai-header` / `.om-ai-grid` / `.om-ai-field` / `.om-ai-stars`
+- `.pag-storico-table` / `.pag-badge` / `.pagato` / `.in_attesa`
+- `.doc-log-grid` / `.doc-log-field`
+- `.comp-sub-row` / `.comp-sub-label`
+- `.qs-volcalc` / `.qs-volcalc-row` / `.qs-volcalc-label` / `.qs-volcalc-value`
+- `.qs-vincoli` / `.qs-vincoli-row` / `.qs-vincoli-label`
 
 ### 15.4 Mappa Schermate
 
@@ -1861,27 +1927,29 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | 4 | Calendario Eventi (Gantt) | `page-calendario` | Principale → Calendario Eventi | `oltre-il-giardino-gestione-noleggi.html:1010-1100` |
 | 5 | Preventivi | `page-preventivi` | Operativo → Preventivi | `:931-950` |
 | 6 | Ordini | `page-ordini` | Operativo → Ordini | `:953-971` |
-| 7 | Logistica | `page-logistica` | Operativo → Logistica | `:1038-1055` |
-| 8 | Clienti | `page-clienti` | Anagrafiche → Clienti | `:1058-1077` |
+| 7 | Logistica | `page-logistica` | Operativo → Logistica | `app.html` — anagrafica contenitori + documenti di riferimento (fatture, DDT) |
+| 8 | Clienti | `page-clienti` | Anagrafiche → Clienti | `app.html` — elenco clienti + storico pagamenti Rossi Srl |
 
 ### 15.5 Dati Demo
 
 Il prototipo contiene dati realistici estratti da oltreilgiardino.biz:
 
 | Entità | Quantità | Esempi |
-|---|---|---|
+|---|---|---|---|
 | Categorie | 13 | Sedute, Tavoli, Tovagliato, Luci, Mobili, Banconi, Piante e Vasi, Pavimenti, Mise en place, Coperture, Accessori e sicurezza, Bimbi, Natale |
-| Prodotti | 20 | Sedia Chiavari, Sedia Bristol, Sedia Ball, Poltrona Amal, Divano Acapulco, Tavolo rett. 180cm, Tavolo tondo, Tavolo Holland, Tavolo Bigjoy, Lampada Calobra, Nuvola, Neon, Lampadario Cristal, Candelabro, Lanterna Celine, Cornice LED, Libreria Scala, Valigia Vintage, Specchio Reflex, Cuscini damascati |
+| Prodotti | 21 | 20 originali + Bancone Pallet (composito) |
 | Clienti | 7 | Rossi Srl, Bianchi Spa, Verdi & Figli, Neri Spa, Blu Events, Gialli Party, Arancio Catering |
-| Ordini | 6 | #2026/040 — #2026/047 con stati diversi |
+| Ordini | 6 | #2026/040 — #2026/047 con stati diversi — ogni ordine include `payments` (1-2 rate) e `docLog` (ZTL, muletto, personale, note) |
 | Preventivi | 7 | #2026/026 — #2026/032 con 5 stati diversi |
-| Documenti riferimento | 5 | DDT-2026-085 — DDT-2026-089 (dal gestionale) |
+| Documenti riferimento | 5 | DDT-2026-085 — DDT-2026-089 + FATT-001 (dal gestionale) |
+| Contenitori | 7 | Cassa media/grande, Baule cristallo, Pallet EU/industriale, Carrello appendiabiti/piatto |
+| Movimenti prodotto | 6 | Per Sedia Chiavari: 4 uscite + 2 rientri con saldo progressivo |
 | Impegni Gantt | 6 | Su 22 giorni (15 Giu → 6 Lug), con 4 stati |
 | Immagini | 33 | 13 categorie + 15 prodotti + 2 hero + 1 logo + 2 grafiche |
 
 ### 15.6 Note per Sviluppo
 
-**Cosa funziona nel prototipo:**
+**Cosa funziona nel prototipo v2.2:**
 - Navigazione SPA completa tra 8 pagine + modale dettaglio ordine
 - Gantt interattivo con drag-to-pan, scroll-by, scroll-to-commit, sparkline
 - Filtri ricerca e selezione stato su Catalogo e Calendario Eventi
@@ -1890,28 +1958,34 @@ Il prototipo contiene dati realistici estratti da oltreilgiardino.biz:
 - Responsive base (sidebar collapse a 920px)
 - Foto allestimento con griglia thumbnail e zoom overlay con navigazione ◀/▶
 - Questionario post-evento AI con stelle, select, input, textarea, tag AI
+- **Wizard Preventivo 4 step** (v2.2): Dati ordine → Righe ordine (con IVA, sconto %, sconto fisso, prezzo manuale, note, compositi, disponibilità) → Logistica (contenitori, volume, peso, colli, pallet, viaggi, vincoli consegna) → Riepilogo (dettaglio IVA per aliquota, logistica, sconti)
+- **Anagrafica dettagliata prodotto** (v2.2): 2 nuovi tab — Anagrafica (fornitore, costi, posizione, dimensioni) + Movimenti (entrate/uscite per evento, saldo progressivo)
+- **Pagamenti nell'ordine** (v2.2): Sezione nella modale ordine con tabella storico pagamenti e pulsanti azione
+- **Storico pagamenti cliente** (v2.2): Tabella in pagina Clienti con ultimi 6 movimenti Rossi Srl
+- **Documento Logistico** (v2.2): Sezione nella modale ordine con campi ZTL, muletto, personale, note; pulsante PDF placeholder
+- **Logistica** (v2.2): Pagina con anagrafica contenitori (7 tipi) e documenti di riferimento (DDT + fatture)
+- **Bancone Pallet** (composito): Primo prodotto composito nel catalogo con 3 sotto-righe espandibili
 
 **Cosa manca e va implementato:**
 
 | Componente | Fase | Note |
 |---|---|---|
-| Wizard "Nuovo Preventivo" | Prototipato | Modale 3 step: dati ordine → righe ordine (modale secondaria per ricerca catalogo con disponibilità 3 livelli) → riepilogo costi. Sconto per riga e globale.
+| Wizard "Nuovo Preventivo" | ✅ **Prototipato v2.2** | 4 step completi. Manca: persistenza backend, invio email |
 | Foto allestimento | Prototipato | Griglia thumbnail + zoom overlay. Manca: upload reale, eliminazione, didascalia editabile, storage backend |
 | Questionario AI | Prototipato | Form post-evento con stelle, select, input, tag. Manca: persistenza backend, calcolo AI reale, training model |
+| Documento logistico PDF | Fase 2 | Pulsante presente (placeholder alert). Generazione PDF reale |
+| Ricezione documenti da gestionale | Fase 2 | Webhook/API per ricevere DDT, fatture, note credito dal gestionale esterno |
+| Integrazione gestionale (sync stati) | Fase 2 | Comunicazione stato ordine → gestionale per fatturazione |
 | Wizard "Nuovo Ordine" | Fase 2 | Trasformazione da preventivo o creazione diretta |
 | Dettaglio Preventivo | Fase 2 | Vista completa preventivo con azioni (invia, archivia, trasforma) |
-| Dettaglio Cliente | Fase 1 | Vista anagrafica con storico ordini e preventivi |
+| Dettaglio Cliente | Fase 1 | Vista anagrafica completa con storico ordini e preventivi |
 | Form creazione Cliente | Fase 1 | Inserimento anagrafica |
 | Form modifica Prodotto | Fase 1 | Modifica info, prezzi, quantità |
-| Logistica movimenti (carico/scarico) | Fase 3 | Tracciamento contenitori casse/pallet/carrelli per ordine |
-| Documento logistico | Fase 2 | Form ZTL, Area C, muletti, personale — PDF esportabile |
-| Ricezione documenti da gestionale | Fase 2 | Webhook/API per ricevere DDT, fatture, note credito dal gestionale esterno |
 | Cambio stato articoli | Fase 3 | Disponibile → In carico → In noleggio → Reso/Danneggiato |
 | Paginazione tabella | Fase 1 | Componente paginazione client-side/server-side |
 | Export CSV/PDF | Fase 4 | Download dati da tabella |
 | Sidebar mobile | Fase 6 | Toggle hamburger per schermi <920px |
 | Autenticazione | Fase 1 | Login page, JWT, refresh token, ruoli |
-| Integrazione gestionale | Fase 5 | Adapter pattern per sync anagrafiche/ordini/movimenti |
 
 ---
 
