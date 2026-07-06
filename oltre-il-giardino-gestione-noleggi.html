@@ -1360,6 +1360,104 @@
       z-index: 100;
     }
     .app-footer strong { color: var(--fg); }
+
+    /* ── Gruppi articoli ── */
+    .q-groups-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .q-group-header {
+      background: var(--fg-soft); border-bottom: 1px solid var(--border); cursor: default;
+    }
+    .q-group-header td { padding: 6px 10px !important; }
+    .q-group-header .grip {
+      cursor: grab; color: var(--muted); font-size: 14px; user-select: none; padding: 2px 0;
+      display: inline-flex; align-items: center;
+    }
+    .q-group-header .grip:active { cursor: grabbing; }
+    .q-group-title {
+      font-weight: 600; font-size: 13px; border: none; background: transparent;
+      color: var(--fg); padding: 2px 4px; border-radius: 3px; outline: none;
+    }
+    .q-group-title:focus { background: var(--surface); border: 1px solid var(--accent); }
+    .q-group-desc {
+      font-size: 11px; color: var(--muted); border: none; background: transparent;
+      padding: 1px 4px; border-radius: 3px; outline: none; width: 280px;
+    }
+    .q-group-desc:focus { background: var(--surface); border: 1px solid var(--border); }
+    .q-group-note-area {
+      display: flex; align-items: center; gap: 6px; margin-top: 2px;
+    }
+    .q-group-note-area textarea {
+      border: 1px solid transparent; background: transparent; padding: 2px 6px;
+      font-size: 11px; color: var(--muted); border-radius: 3px; resize: none;
+      font-family: var(--font-body); outline: none; width: 400px; height: 20px;
+    }
+    .q-group-note-area textarea:focus { border: 1px solid var(--border); background: var(--surface); }
+    .q-group-note-area .note-label {
+      font-size: 10px; color: var(--muted); font-family: var(--font-mono);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .q-group-del {
+      background: none; border: 1px solid transparent; color: var(--muted);
+      font-size: 14px; cursor: pointer; padding: 2px 6px; border-radius: 4px;
+    }
+    .q-group-del:hover { border-color: color-mix(in oklch, var(--danger) 20%, transparent); color: var(--danger); }
+    .q-group-drop-zone {
+      background: color-mix(in oklch, var(--accent) 4%, transparent); border: 2px dashed var(--border);
+      min-height: 36px; transition: all 0.15s;
+    }
+    .q-group-drop-zone.dragover { border-color: var(--accent); background: var(--accent-soft); min-height: 48px; }
+    .q-group-drop-zone td {
+      text-align: center; color: var(--muted); font-size: 11px; font-style: italic; vertical-align: middle;
+    }
+    .q-group-drop-zone.dragover td { color: var(--accent); }
+    .q-item-dragging { opacity: 0.4; }
+    .q-item-drag-handle {
+      cursor: grab; color: var(--muted); font-size: 12px; user-select: none;
+      display: inline-flex; align-items: center; padding: 4px 2px; opacity: 0.3;
+    }
+    tr:hover .q-item-drag-handle { opacity: 1; }
+    .q-ungrouped-label {
+      font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+      color: var(--muted); letter-spacing: 0.05em; padding: 8px 10px;
+    }
+    .q-group-mgr-overlay {
+      display: none; position: fixed; inset: 0; z-index: 260;
+      background: color-mix(in oklch, var(--fg) 40%, transparent);
+      backdrop-filter: blur(4px); justify-content: center; align-items: center;
+    }
+    .q-group-mgr-overlay.open { display: flex; }
+    .q-group-mgr {
+      background: var(--surface); border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px oklch(0% 0 0 / 0.25);
+      width: min(500px, 94vw); max-height: 80vh; display: flex; flex-direction: column;
+    }
+    .q-group-mgr-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .q-group-mgr-header h3 { font-family: var(--font-display); font-size: 17px; margin: 0; }
+    .q-group-mgr-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+    .q-group-mgr-list { display: flex; flex-direction: column; gap: 8px; }
+    .q-group-mgr-item {
+      display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+      border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px;
+    }
+    .q-group-mgr-item .gm-title { flex: 1; font-weight: 500; }
+    .q-group-mgr-item .gm-count { color: var(--muted); font-size: 11px; }
+    .q-group-mgr-item .gm-del {
+      background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 2px 4px;
+    }
+    .q-group-mgr-item .gm-del:hover { color: var(--danger); }
+    .q-group-mgr-add {
+      display: flex; align-items: center; gap: 8px; margin-top: 12px;
+    }
+    .q-group-mgr-add input {
+      flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+      font: inherit; font-size: 13px;
+    }
+    .q-group-mgr-add input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+    .q-group-mgr-footer {
+      padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;
+    }
   </style>
 </head>
 <body>
@@ -1942,8 +2040,10 @@
 
         <!-- STEP 2: Seleziona articoli -->
         <div class="quote-step-panel" id="qstep-2">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="q-groups-bar">
             <div class="q-selected-label" style="margin:0;">Articoli selezionati (<span id="q-sel-count">0</span>)</div>
+            <button class="btn btn btn-sm" style="border:1px solid var(--border);font-size:11px;" onclick="openGroupManager()">📂 Gestisci gruppi</button>
+            <div style="flex:1;"></div>
             <button class="btn btn-primary btn-sm" onclick="openRowsModal()">+ Aggiungi articoli</button>
           </div>
 
@@ -2030,6 +2130,27 @@
       </div>
       <div class="rows-footer">
         <button class="btn btn-secondary" onclick="closeRowsModal({target:this,currentTarget:this.closest('.rows-overlay')})">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GROUP MANAGER MODAL ── -->
+  <div id="group-mgr" class="q-group-mgr-overlay" onclick="closeGroupManager(event)">
+    <div class="q-group-mgr" onclick="event.stopPropagation()">
+      <div class="q-group-mgr-header">
+        <h3>Gestione gruppi</h3>
+        <button class="rows-close" onclick="closeGroupManager({target:this,currentTarget:this.closest('.q-group-mgr-overlay')})">✕</button>
+      </div>
+      <div class="q-group-mgr-body">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Crea e gestisci gruppi di articoli. Trascina gli articoli tra i gruppi nella tabella sottostante.</div>
+        <div class="q-group-mgr-list" id="group-mgr-list"></div>
+        <div class="q-group-mgr-add">
+          <input type="text" id="q-new-group-name" placeholder="Nome nuovo gruppo…" onkeydown="if(event.key==='Enter')quoteCreateGroup()" />
+          <button class="btn btn-primary btn-sm" onclick="quoteCreateGroup()">Crea gruppo</button>
+        </div>
+      </div>
+      <div class="q-group-mgr-footer">
+        <button class="btn btn-secondary" onclick="closeGroupManager({target:this,currentTarget:this.closest('.q-group-mgr-overlay')})">Chiudi</button>
       </div>
     </div>
   </div>
@@ -2998,11 +3119,14 @@
     ];
 
     var quoteCurrentStep = 1;
-    var quoteSelectedItems = []; // [{catalogIdx, qty, priceType, unitPrice, discountPct}]
+    var quoteSelectedItems = [];
+    var quoteGroups = [];
+    var dragItemIdx = null;
 
     function openQuoteModal() {
       quoteCurrentStep = 1;
       quoteSelectedItems = [];
+      quoteGroups = [];
       document.getElementById('q-global-discount').value = '0';
       document.getElementById('q-client').value = '';
       document.getElementById('q-event-date').value = '';
@@ -3184,7 +3308,10 @@
       if (existing) { existing.qty += 1; } else {
         quoteSelectedItems.push({
           catalogIdx: catalogIdx, qty: 1, priceType: 'giorno',
-          unitPrice: item.prices.giorno, discountPct: 0
+          unitPrice: item.prices.giorno, discountPct: 0,
+          fixedDiscount: 0, priceManual: false, manualPrice: 0,
+          iva: 22, composito: null, note: '',
+          groupId: ''
         });
       }
       quoteRenderSelected();
@@ -3202,7 +3329,10 @@
         var qty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
         quoteSelectedItems.push({
           catalogIdx: catalogIdx, qty: qty, priceType: 'giorno',
-          unitPrice: item.prices.giorno, discountPct: 0
+          unitPrice: item.prices.giorno, discountPct: 0,
+          fixedDiscount: 0, priceManual: false, manualPrice: 0,
+          iva: 22, composito: null, note: '',
+          groupId: ''
         });
       }
       quoteRenderSelected();
@@ -3222,10 +3352,101 @@
       rowsSearchCatalog();
     }
 
-    function quoteRemoveItem(idx) {
-      quoteSelectedItems.splice(idx, 1);
+    function quoteRemoveItem(idx) { quoteSelectedItems.splice(idx, 1); quoteRenderSelected(); quoteRecalcTotals(); }
+
+    // ── Group management ──
+    function openGroupManager() {
+      renderGroupManager();
+      document.getElementById('group-mgr').classList.add('open');
+    }
+    function closeGroupManager(e) {
+      if (e.target === e.currentTarget || e.target.classList.contains('rows-close') || e.target.closest('.rows-close')) {
+        document.getElementById('group-mgr').classList.remove('open');
+      }
+    }
+    function renderGroupManager() {
+      var list = document.getElementById('group-mgr-list');
+      var html = '';
+      quoteGroups.forEach(function(g, i) {
+        var count = quoteSelectedItems.filter(function(s) { return s.groupId === g.id; }).length;
+        html += '<div class="q-group-mgr-item">' +
+          '<span class="gm-title">' + g.title + '</span>' +
+          '<span class="gm-count">' + count + ' articoli' + (g.desc ? ' · ' + g.desc : '') + '</span>' +
+          '<button class="gm-del" onclick="quoteDeleteGroup(\'' + g.id + '\')" title="Elimina gruppo">✕</button></div>';
+      });
+      if (quoteGroups.length === 0) {
+        html += '<div style="text-align:center;padding:16px;color:var(--muted);font-style:italic;">Nessun gruppo creato. Usa il campo qui sotto per crearne uno.</div>';
+      }
+      list.innerHTML = html;
+    }
+    function quoteCreateGroup() {
+      var input = document.getElementById('q-new-group-name');
+      var name = input.value.trim();
+      if (!name) return;
+      var id = 'g_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      quoteGroups.push({ id: id, title: name, desc: '', note: '' });
+      input.value = '';
+      renderGroupManager();
+      quoteRenderSelected();
+    }
+    function quoteDeleteGroup(id) {
+      if (!confirm('Eliminare il gruppo e spostare i suoi articoli in "Senza gruppo"?')) return;
+      quoteGroups = quoteGroups.filter(function(g) { return g.id !== id; });
+      quoteSelectedItems.forEach(function(s) { if (s.groupId === id) s.groupId = ''; });
+      renderGroupManager();
+      quoteRenderSelected();
+    }
+    function quoteMoveToGroup(itemIdx, groupId) {
+      quoteSelectedItems[itemIdx].groupId = groupId;
       quoteRenderSelected();
       quoteRecalcTotals();
+    }
+    function quoteSetGroupNote(groupId) {
+      var g = quoteGroups.find(function(g) { return g.id === groupId; });
+      if (!g) return;
+      var note = prompt('Nota per il gruppo "' + g.title + '" (non influisce sulla fatturazione):', g.note || '');
+      if (note !== null) { g.note = note; quoteRenderSelected(); }
+    }
+    function quoteSetGroupTitle(groupId, title) {
+      var g = quoteGroups.find(function(g) { return g.id === groupId; });
+      if (g) { g.title = title; renderGroupManager(); }
+    }
+    function quoteSetGroupDesc(groupId, desc) {
+      var g = quoteGroups.find(function(g) { return g.id === groupId; });
+      if (g) { g.desc = desc; renderGroupManager(); }
+    }
+
+    // ── Drag and drop ──
+    function quoteDragStart(e, idx) {
+      dragItemIdx = idx;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', idx);
+      setTimeout(function() {
+        if (e.target.closest('tr')) e.target.closest('tr').classList.add('q-item-dragging');
+      }, 0);
+    }
+    function quoteDragEnd(e) {
+      document.querySelectorAll('.q-item-dragging').forEach(function(el) { el.classList.remove('q-item-dragging'); });
+      document.querySelectorAll('.q-group-drop-zone').forEach(function(el) { el.classList.remove('dragover'); });
+      dragItemIdx = null;
+    }
+    function quoteDragOver(e, groupId) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      var zone = e.currentTarget;
+      zone.classList.add('dragover');
+    }
+    function quoteDragLeave(e) {
+      e.currentTarget.classList.remove('dragover');
+    }
+    function quoteDrop(e, groupId) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('dragover');
+      var idx = parseInt(e.dataTransfer.getData('text/plain'));
+      if (!isNaN(idx) && idx >= 0 && idx < quoteSelectedItems.length) {
+        quoteMoveToGroup(idx, groupId);
+      }
+      dragItemIdx = null;
     }
 
     function quoteRenderSelected() {
@@ -3233,14 +3454,63 @@
       var countEl = document.getElementById('q-sel-count');
       if (countEl) countEl.textContent = quoteSelectedItems.length;
       if (quoteSelectedItems.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Nessun articolo selezionato. Clicca "Aggiungi articoli" per aprire il catalogo.</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Nessun articolo selezionato. Clicca "Aggiungi articoli" per aprire il catalogo.</td></tr>';
         return;
       }
       var dateRange = quoteGetEventDateRange();
-      var html = '';
+
+      var grouped = { _ungrouped: [] };
+      quoteGroups.forEach(function(g) { grouped[g.id] = []; });
       quoteSelectedItems.forEach(function(sel, i) {
+        var gid = sel.groupId || '_ungrouped';
+        if (!grouped[gid]) grouped[gid] = [];
+        grouped[gid].push(i);
+      });
+
+      var html = '';
+      quoteGroups.forEach(function(g) {
+        var members = grouped[g.id] || [];
+        if (members.length === 0) return;
+        html += '<tr class="q-group-header" draggable="false">';
+        html += '<td><span class="grip" draggable="false">⠿</span></td>';
+        html += '<td colspan="8">' +
+          '<div class="row-between">' +
+          '<div class="row">' +
+          '<input class="q-group-title" value="' + g.title.replace(/"/g, '&quot;') + '" onchange="quoteSetGroupTitle(\'' + g.id + '\', this.value)" title="Clicca per rinominare" />' +
+          '<input class="q-group-desc" placeholder="Descrizione (opzionale)" value="' + (g.desc || '').replace(/"/g, '&quot;') + '" onchange="quoteSetGroupDesc(\'' + g.id + '\', this.value)" />' +
+          '</div>' +
+          '<div class="row">' +
+          '<button class="btn-ghost btn-sm" onclick="quoteSetGroupNote(\'' + g.id + '\')" title="Nota gruppo (non fatturabile)">📝</button>' +
+          '<span style="font-size:11px;color:var(--muted);font-family:var(--font-mono);">' + members.length + ' articoli</span>' +
+          '</div>' +
+          '</div>' +
+          (g.note ? '<div class="q-group-note-area"><span class="note-label">Nota:</span><span style="font-size:11px;color:var(--muted);font-style:italic;">' + g.note + '</span></div>' : '') +
+          '</td></tr>';
+
+        html = renderItems(html, members, dateRange, true);
+        html += '<tr class="q-group-drop-zone" ondragover="quoteDragOver(event,\'' + g.id + '\')" ondragleave="quoteDragLeave(event)" ondrop="quoteDrop(event,\'' + g.id + '\')"><td colspan="9">— Trascina qui un articolo per spostarlo in "' + g.title + '" —</td></tr>';
+      });
+
+      var ungrouped = grouped._ungrouped || [];
+      if (ungrouped.length > 0) {
+        html += '<tr class="q-group-header"><td><span class="grip">⠿</span></td><td colspan="8"><span class="q-ungrouped-label">Senza gruppo (' + ungrouped.length + ')</span></td></tr>';
+        html = renderItems(html, ungrouped, dateRange);
+        html += '<tr class="q-group-drop-zone" ondragover="quoteDragOver(event,\'\')" ondragleave="quoteDragLeave(event)" ondrop="quoteDrop(event,\'\')"><td colspan="9">— Trascina qui per rimuovere dal gruppo —</td></tr>';
+      }
+
+      tbody.innerHTML = html;
+    }
+
+    function renderItems(html, indices, dateRange) {
+      indices.forEach(function(i) {
+        var sel = quoteSelectedItems[i];
         var item = QUOTE_CATALOG[sel.catalogIdx];
-        var lineTotal = sel.qty * sel.unitPrice * (1 - sel.discountPct / 100);
+        if (!item) return;
+        var effectivePrice = sel.priceManual ? sel.manualPrice : sel.unitPrice;
+        var lineGross = sel.qty * effectivePrice;
+        var lineDiscount = lineGross * sel.discountPct / 100 + (sel.fixedDiscount || 0);
+        var lineTotal = lineGross - lineDiscount;
+        var noteShort = sel.note ? sel.note.substring(0, 20) : '';
         var av = quoteCalcAvailability(item, dateRange);
         var qtyClass = 'q-sel-qty', warnPill = '';
         if (sel.qty > av.freeVero) {
@@ -3253,27 +3523,50 @@
           qtyClass += ' warn-probabile';
           warnPill = '<div class="avail-warn-pill pill-probabile"><span class="warn-arrow">▲</span> Supera probabile (' + (av.total - av.probabile) + ' disp.)</div>';
         }
-        html += '<tr>';
-        html += '<td><img src="' + item.img + '" style="width:28px;height:28px;border-radius:4px;object-fit:cover;" onerror="this.style.display=\'none\'" /></td>';
-        html += '<td><strong>' + item.name + '</strong> <span style="color:var(--muted);font-size:11px;">' + item.code + '</span>';
+        html += '<tr draggable="true" ondragstart="quoteDragStart(event,' + i + ')" ondragend="quoteDragEnd(event)">';
+        html += '<td><span class="q-item-drag-handle" draggable="false">⠿</span></td>';
+        html += '<td><img src="' + item.img + '" style="width:28px;height:28px;border-radius:4px;object-fit:cover;" onerror="this.style.display=\'none\'" /> <strong>' + item.name + '</strong> <span style="color:var(--muted);font-size:11px;">' + item.code + '</span>';
+        if (sel.composito) html += '<span class="comp-badge">Composito</span>';
+        if (sel.note) html += '<div style="font-size:11px;color:var(--muted);margin-top:2px;font-style:italic;">📝 ' + noteShort + (sel.note.length > 20 ? '…' : '') + '</div>';
         html += '<div style="margin-top:3px;"><span class="sel-avail-badge" style="background:color-mix(in oklch, var(--success) 10%, transparent);color:var(--success);" title="Impegnato vero: ' + av.vero + '">V ' + av.vero + '</span>';
         html += '<span class="sel-avail-badge" style="background:color-mix(in oklch, var(--warn) 10%, transparent);color:oklch(50% 0.14 80);" title="Impegnato teorico: ' + av.teorico + '">T ' + av.teorico + '</span>';
         html += '<span class="sel-avail-badge" style="background:color-mix(in oklch, oklch(55% 0.15 250) 10%, transparent);color:oklch(45% 0.15 250);" title="Impegnato probabile: ' + av.probabile + '">P ' + av.probabile + '</span>';
         html += '<span class="sel-avail-badge" style="color:var(--fg);font-weight:600;" title="Totale a magazzino">/ Tot: ' + av.total + '</span></div></td>';
         html += '<td class="num"><div><input class="' + qtyClass + '" type="number" min="1" max="' + item.qty + '" value="' + sel.qty + '" onchange="quoteUpdateQty(' + i + ', this.value)" />' + warnPill + '</div></td>';
         html += '<td><select class="qf-select" style="padding:4px 8px;font-size:12px;" onchange="quoteUpdatePriceType(' + i + ', this.value)">';
-        var types = [{k:'giorno',l:'Giorno'},{k:'3gg',l:'3 Giorni'},{k:'settimana',l:'Settimana'},{k:'forfait',l:'Forfait'}];
-        types.forEach(function(t) {
+        [{k:'giorno',l:'Giorno'},{k:'3gg',l:'3 Giorni'},{k:'settimana',l:'Settimana'},{k:'forfait',l:'Forfait'}].forEach(function(t) {
           html += '<option value="' + t.k + '"' + (sel.priceType === t.k ? ' selected' : '') + '>' + t.l + '</option>';
         });
         html += '</select></td>';
-        html += '<td class="num"><span style="font-family:var(--font-mono);font-size:12px;">€ ' + sel.unitPrice.toFixed(2).replace('.', ',') + '</span></td>';
-        html += '<td class="num"><input class="q-sel-discount" type="number" min="0" max="100" value="' + sel.discountPct + '" onchange="quoteUpdateDiscount(' + i + ', this.value)" /></td>';
+        if (sel.priceManual) {
+          html += '<td class="num"><input class="q-sel-price-manual" type="number" min="0.01" step="0.01" value="' + sel.manualPrice.toFixed(2) + '" onchange="quoteUpdateManualPrice(' + i + ', this.value)" /></td>';
+        } else {
+          html += '<td class="num"><span style="font-family:var(--font-mono);font-size:12px;">€ ' + effectivePrice.toFixed(2).replace('.', ',') + '</span>';
+          html += ' <button class="sel-price-ovr-btn" onclick="quoteToggleManualPrice(' + i + ')" title="Override prezzo">✏️</button></td>';
+        }
+        html += '<td class="num" style="vertical-align:middle;"><div>' +
+          '<input class="q-sel-discount" type="number" min="0" max="100" value="' + sel.discountPct + '" onchange="quoteUpdateDiscount(' + i + ', this.value)" style="width:40px;" title="% sconto" />' +
+          (sel.fixedDiscount > 0 ? '<br><span style="font-size:10px;color:var(--danger);font-family:var(--font-mono);">−€' + sel.fixedDiscount.toFixed(2).replace('.',',') + '</span>' : '') +
+          '</div></td>';
+        html += '<td class="num"><select class="q-sel-iva" onchange="quoteUpdateIVA(' + i + ', this.value)">' +
+          '<option value="22"' + (sel.iva === 22 ? ' selected' : '') + '>22%</option>' +
+          '<option value="4"' + (sel.iva === 4 ? ' selected' : '') + '>4%</option>' +
+          '<option value="0"' + (sel.iva === 0 ? ' selected' : '') + '>Esente</option>' +
+          '</select></td>';
         html += '<td class="num" style="font-weight:600;font-family:var(--font-mono);">€ ' + lineTotal.toFixed(2).replace('.', ',') + '</td>';
         html += '<td><button class="q-sel-remove" onclick="quoteRemoveItem(' + i + ')">✕</button></td>';
         html += '</tr>';
+        if (sel.composito) {
+          sel.composito.forEach(function(cr) {
+            var subQty = cr.qty * sel.qty;
+            var subTotal = subQty * cr.unitPrice;
+            html += '<tr class="comp-sub-row"><td></td><td colspan="2">↳ ' + cr.name + ' <span style="color:var(--muted);font-size:11px;">' + cr.code + '</span></td>';
+            html += '<td class="num">x' + cr.qty + '/' + cr.unit + '</td><td class="num">€ ' + cr.unitPrice.toFixed(2).replace('.',',') + '</td>';
+            html += '<td class="num">—</td><td></td><td class="num">€ ' + subTotal.toFixed(2).replace('.',',') + '</td><td></td></tr>';
+          });
+        }
       });
-      tbody.innerHTML = html;
+      return html;
     }
 
     function quoteUpdateQty(idx, val) {
@@ -3298,23 +3591,69 @@
       quoteRecalcTotals();
     }
 
+    function quoteUpdateIVA(idx, val) {
+      quoteSelectedItems[idx].iva = parseInt(val) || 22;
+      quoteRenderSelected(); quoteRecalcTotals();
+    }
+
+    function quoteToggleManualPrice(idx) {
+      var sel = quoteSelectedItems[idx];
+      sel.priceManual = !sel.priceManual;
+      if (sel.priceManual) sel.manualPrice = sel.unitPrice;
+      quoteRenderSelected(); quoteRecalcTotals();
+    }
+
+    function quoteUpdateManualPrice(idx, val) {
+      quoteSelectedItems[idx].manualPrice = Math.max(0.01, parseFloat(val) || 0);
+      quoteRecalcTotals();
+    }
+
     function quoteRecalcTotals() {
-      var subtotal = 0, rowDiscount = 0;
+      var subtotal = 0, rowDiscount = 0, fixedDiscount = 0;
+      var ivaBuckets = {};
       quoteSelectedItems.forEach(function(sel) {
-        var lineGross = sel.qty * sel.unitPrice;
-        var lineDiscount = lineGross * sel.discountPct / 100;
+        var effectivePrice = sel.priceManual ? sel.manualPrice : sel.unitPrice;
+        var lineGross = sel.qty * effectivePrice;
+        var pctAmt = lineGross * sel.discountPct / 100;
+        var fixedAmt = sel.fixedDiscount || 0;
         subtotal += lineGross;
-        rowDiscount += lineDiscount;
+        rowDiscount += pctAmt;
+        fixedDiscount += fixedAmt;
+        var net = lineGross - pctAmt - fixedAmt;
+        var key = sel.iva || 22;
+        ivaBuckets[key] = (ivaBuckets[key] || 0) + net;
       });
-      var afterRowDiscount = subtotal - rowDiscount;
+      var afterRow = subtotal - rowDiscount - fixedDiscount;
       var globalPct = parseFloat(document.getElementById('q-global-discount').value) || 0;
-      var globalDiscount = afterRowDiscount * globalPct / 100;
-      var total = afterRowDiscount - globalDiscount;
+      var globalDiscount = afterRow * globalPct / 100;
+      var total = afterRow - globalDiscount;
+      var ivaTot = 0;
+      Object.keys(ivaBuckets).forEach(function(k) {
+        ivaTot += ivaBuckets[k] * parseInt(k) / 100;
+      });
+      var totalIva = total + ivaTot;
 
       document.getElementById('q-subtotal').textContent = '€ ' + subtotal.toFixed(2).replace('.', ',');
-      document.getElementById('q-row-discount').textContent = '− € ' + rowDiscount.toFixed(2).replace('.', ',');
+      document.getElementById('q-row-discount').textContent = '− € ' + (rowDiscount + fixedDiscount).toFixed(2).replace('.', ',');
       document.getElementById('q-global-discount-amt').textContent = '− € ' + globalDiscount.toFixed(2).replace('.', ',');
       document.getElementById('q-total').textContent = '€ ' + total.toFixed(2).replace('.', ',');
+      // Add IVA detail row if not present
+      var box = document.querySelector('.q-summary-box');
+      var existingIva = document.getElementById('q-iva-detail');
+      if (!existingIva) {
+        var div = document.createElement('div');
+        div.className = 'q-summary-iva-detail';
+        div.id = 'q-iva-detail';
+        box.appendChild(div);
+        existingIva = div;
+      }
+      var ivaHtml = '';
+      Object.keys(ivaBuckets).forEach(function(k) {
+        ivaHtml += '<div class="iva-line"><span>IVA ' + k + '%</span><span>€ ' + (ivaBuckets[k] * k / 100).toFixed(2).replace('.',',') + '</span></div>';
+      });
+      existingIva.innerHTML = ivaHtml;
+      window._quoteIvaTot = ivaTot;
+      window._quoteTotalIva = totalIva;
     }
 
     function quoteBuildFinal() {
@@ -3327,8 +3666,7 @@
       var notes = document.getElementById('q-notes').value || '';
 
       var grid = document.getElementById('q-final-grid');
-      var html = '';
-      html += '<div class="q-final-card"><h4>Dati Evento</h4>';
+      var html = '<div class="q-final-card"><h4>Dati Evento</h4>';
       html += '<div class="q-final-row"><span class="f-label">Data</span><span class="f-val">' + eventDate + '</span></div>';
       html += '<div class="q-final-row"><span class="f-label">Evento</span><span class="f-val">' + eventName + '</span></div>';
       html += '<div class="q-final-row"><span class="f-label">Cliente</span><span class="f-val">' + client + '</span></div>';
@@ -3338,20 +3676,34 @@
       if (notes) html += '<div class="q-final-row"><span class="f-label">Note</span><span class="f-val">' + notes + '</span></div>';
       html += '</div>';
 
-      html += '<div class="q-final-card"><h4>Riepilogo Costi</h4>';
-      var subtotal = 0, rowDiscount = 0;
+      var subtotal = 0, rowDiscount = 0, fixedDiscount = 0;
+      var ivaBuckets = {};
       quoteSelectedItems.forEach(function(sel) {
-        subtotal += sel.qty * sel.unitPrice;
-        rowDiscount += sel.qty * sel.unitPrice * sel.discountPct / 100;
+        var ep = sel.priceManual ? sel.manualPrice : sel.unitPrice;
+        var g = sel.qty * ep;
+        subtotal += g;
+        rowDiscount += g * sel.discountPct / 100;
+        fixedDiscount += sel.fixedDiscount || 0;
+        var net = g * (1 - sel.discountPct / 100) - (sel.fixedDiscount || 0);
+        var key = sel.iva || 22;
+        ivaBuckets[key] = (ivaBuckets[key] || 0) + net;
       });
-      var afterRow = subtotal - rowDiscount;
+      var afterRow = subtotal - rowDiscount - fixedDiscount;
       var globalPct = parseFloat(document.getElementById('q-global-discount').value) || 0;
       var globalDiscount = afterRow * globalPct / 100;
       var total = afterRow - globalDiscount;
+      var ivaTot = 0;
+      Object.keys(ivaBuckets).forEach(function(k) { ivaTot += ivaBuckets[k] * parseInt(k) / 100; });
+      html += '<div class="q-final-card"><h4>Riepilogo Costi</h4>';
       html += '<div class="q-final-row"><span class="f-label">Subtotale</span><span class="f-val">€ ' + subtotal.toFixed(2).replace('.', ',') + '</span></div>';
-      html += '<div class="q-final-row"><span class="f-label">Sconto righe</span><span class="f-val" style="color:var(--danger);">− € ' + rowDiscount.toFixed(2).replace('.', ',') + '</span></div>';
-      html += '<div class="q-final-row"><span class="f-label">Sconto globale (' + globalPct + '%)</span><span class="f-val" style="color:var(--danger);">− € ' + globalDiscount.toFixed(2).replace('.', ',') + '</span></div>';
-      html += '<div class="q-final-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:6px;"><span class="f-label" style="font-weight:600;">Totale</span><span class="f-val" style="font-size:18px;color:var(--accent);">€ ' + total.toFixed(2).replace('.', ',') + '</span></div>';
+      if (rowDiscount > 0) html += '<div class="q-final-row"><span class="f-label">Sconto % righe</span><span class="f-val" style="color:var(--danger);">− € ' + rowDiscount.toFixed(2).replace('.', ',') + '</span></div>';
+      if (fixedDiscount > 0) html += '<div class="q-final-row"><span class="f-label">Sconto fisso righe</span><span class="f-val" style="color:var(--danger);">− € ' + fixedDiscount.toFixed(2).replace('.', ',') + '</span></div>';
+      if (globalPct > 0) html += '<div class="q-final-row"><span class="f-label">Sconto globale (' + globalPct + '%)</span><span class="f-val" style="color:var(--danger);">− € ' + globalDiscount.toFixed(2).replace('.', ',') + '</span></div>';
+      html += '<div class="q-final-row"><span class="f-label">Imponibile</span><span class="f-val">€ ' + total.toFixed(2).replace('.', ',') + '</span></div>';
+      Object.keys(ivaBuckets).forEach(function(k) {
+        html += '<div class="q-final-row"><span class="f-label">IVA ' + k + '%</span><span class="f-val" style="color:var(--muted);">€ ' + (ivaBuckets[k] * k / 100).toFixed(2).replace('.',',') + '</span></div>';
+      });
+      html += '<div class="q-final-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:6px;"><span class="f-label" style="font-weight:600;">Totale</span><span class="f-val" style="font-size:18px;color:var(--accent);">€ ' + (total + ivaTot).toFixed(2).replace('.', ',') + '</span></div>';
       html += '<div class="q-final-row"><span class="f-label">Articoli</span><span class="f-val">' + quoteSelectedItems.length + '</span></div>';
       html += '<div class="q-final-row"><span class="f-label">Pezzi totali</span><span class="f-val">' + quoteSelectedItems.reduce(function(a, s) { return a + s.qty; }, 0) + '</span></div>';
       html += '</div>';
@@ -3359,20 +3711,41 @@
 
       var tbody = document.getElementById('q-final-tbody');
       var rowsHtml = '';
+      var lastGroup = null;
       quoteSelectedItems.forEach(function(sel) {
         var item = QUOTE_CATALOG[sel.catalogIdx];
-        var lineTotal = sel.qty * sel.unitPrice * (1 - sel.discountPct / 100);
+        var g = sel.groupId && quoteGroups.find(function(x) { return x.id === sel.groupId; });
+        if (g && g.id !== lastGroup) {
+          rowsHtml += '<tr style="background:var(--fg-soft);font-weight:600;"><td colspan="7" style="padding:6px 10px;">📁 ' + g.title + (g.desc ? ' <span style="font-weight:400;color:var(--muted);font-size:12px;">— ' + g.desc + '</span>' : '') + '</td></tr>';
+          lastGroup = g.id;
+        } else if (!g && lastGroup !== '_ungrouped') {
+          rowsHtml += '<tr style="background:var(--fg-soft);"><td colspan="7" style="padding:6px 10px;font-size:12px;color:var(--muted);">Senza gruppo</td></tr>';
+          lastGroup = '_ungrouped';
+        }
+        var ep = sel.priceManual ? sel.manualPrice : sel.unitPrice;
+        var lineTotal = sel.qty * ep * (1 - sel.discountPct / 100) - (sel.fixedDiscount || 0);
         var typeLabel = sel.priceType === 'giorno' ? 'Giorno' : sel.priceType === '3gg' ? '3 Giorni' : sel.priceType === 'settimana' ? 'Settimana' : 'Forfait';
-        rowsHtml += '<tr>';
-        rowsHtml += '<td>' + item.name + ' <span style="color:var(--muted);font-size:11px;">' + item.code + '</span></td>';
-        rowsHtml += '<td class="num">' + sel.qty + '</td>';
-        rowsHtml += '<td>' + typeLabel + '</td>';
-        rowsHtml += '<td class="num">€ ' + sel.unitPrice.toFixed(2).replace('.', ',') + '</td>';
-        rowsHtml += '<td class="num">' + (sel.discountPct > 0 ? sel.discountPct + '%' : '—') + '</td>';
-        rowsHtml += '<td class="num" style="font-weight:600;">€ ' + lineTotal.toFixed(2).replace('.', ',') + '</td>';
-        rowsHtml += '</tr>';
+        var ivaLabel = sel.iva === 0 ? 'Esente' : sel.iva + '%';
+        rowsHtml += '<tr><td>' + item.name + ' <span style="color:var(--muted);font-size:11px;">' + item.code + '</span></td>';
+        rowsHtml += '<td class="num">' + sel.qty + '</td><td>' + typeLabel + '</td>';
+        rowsHtml += '<td class="num">€ ' + ep.toFixed(2).replace('.', ',') + '</td>';
+        rowsHtml += '<td class="num">' + (sel.discountPct > 0 ? sel.discountPct + '%' : sel.fixedDiscount > 0 ? '−€' + sel.fixedDiscount.toFixed(2).replace('.',',') : '—') + '</td>';
+        rowsHtml += '<td class="num">' + ivaLabel + '</td>';
+        rowsHtml += '<td class="num" style="font-weight:600;">€ ' + lineTotal.toFixed(2).replace('.', ',') + '</td></tr>';
       });
       tbody.innerHTML = rowsHtml;
+      // Group notes (non-fiscal)
+      var notesWithContent = quoteGroups.filter(function(g) { return g.note; });
+      if (notesWithContent.length > 0) {
+        var notesHtml = '';
+        notesWithContent.forEach(function(g) {
+          notesHtml += '<div style="margin-top:2px;font-size:12px;color:var(--muted);"><strong style="color:var(--fg);">' + g.title + ':</strong> ' + g.note + '</div>';
+        });
+        var noteDiv = document.createElement('div');
+        noteDiv.style.cssText = 'margin-top:16px;padding:12px 16px;background:var(--fg-soft);border-radius:var(--radius);font-size:12px;';
+        noteDiv.innerHTML = '<div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">📝 Note gruppo (non fatturabili)</div>' + notesHtml;
+        grid.parentNode.appendChild(noteDiv);
+      }
     }
 
     // Init: read ?page= param or default to dashboard

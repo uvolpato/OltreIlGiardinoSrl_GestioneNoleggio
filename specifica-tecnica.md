@@ -1,8 +1,8 @@
 # Specifica Tecnica — Prototipo Gestione Noleggi Oltre Il Giardino SRL
 
-> **Versione:** 2.2  
+> **Versione:** 2.3  
 > **Data:** 06/07/2026  
-> **Stato:** Specifica aggiornata v2.2 — IVA, sconto fisso, compositi, logistica, pagamenti, anagrafica/movimenti prodotto  
+> **Stato:** Specifica aggiornata v2.3 — Gruppi articoli, drag-and-drop, step logistica  
 > **Prossimo passo:** Validazione prototipo → Sviluppo Fase 1
 
 ---
@@ -1311,6 +1311,12 @@ Ogni riga evento mostra:
 - **Sconto globale:** input percentuale applicato a tutte le righe
 - **Riepilogo:** Subtotale, Sconto righe, Sconto globale, Totale (con dettaglio IVA)
 - **Conteggio articoli** visibile nella testata della griglia
+- **Gruppi articoli (v2.3):** sistema di raggruppamento per organizzare gli articoli selezionati:
+  - **Pulsante "📂 Gestisci gruppi"** nella barra strumenti → apre modale "Gestione gruppi" (overlay z-index: 260) per creare/rinominare/eliminare gruppi
+  - Ogni gruppo ha: titolo (editabile inline), descrizione opzionale (editabile inline), nota interna (non fatturabile, attivabile con pulsante 📝)
+  - **Intestazioni gruppo** nella tabella: riga grigia con titolo, descrizione, contatore articoli, pulsante nota
+  - **Drag-and-drop HTML5:** ogni riga articolo ha maniglia di trascinamento (⠿), drop zone dedicate tra gruppi per spostare articoli
+  - **Riepilogo (Step 4):** articoli raggruppati per gruppo con titolo e descrizione; note gruppo visualizzate separatamente con label "📝 Note gruppo (non fatturabili)"
 
 ##### 8.3.5b Modale "Righe ordine" (overlay secondaria)
 
@@ -1958,7 +1964,7 @@ Il prototipo contiene dati realistici estratti da oltreilgiardino.biz:
 - Responsive base (sidebar collapse a 920px)
 - Foto allestimento con griglia thumbnail e zoom overlay con navigazione ◀/▶
 - Questionario post-evento AI con stelle, select, input, textarea, tag AI
-- **Wizard Preventivo 4 step** (v2.2): Dati ordine → Righe ordine (con IVA, sconto %, sconto fisso, prezzo manuale, note, compositi, disponibilità) → Logistica (contenitori, volume, peso, colli, pallet, viaggi, vincoli consegna) → Riepilogo (dettaglio IVA per aliquota, logistica, sconti)
+- **Wizard Preventivo 4 step** (v2.3): Dati ordine → Righe ordine (con gruppi articoli, drag-and-drop, IVA, sconto %, sconto fisso, prezzo manuale, note, compositi, disponibilità) → Logistica (contenitori, volume, peso, colli, pallet, viaggi, vincoli consegna) → Riepilogo (dettaglio IVA per aliquota, logistica, sconti, note gruppo non fatturabili)
 - **Anagrafica dettagliata prodotto** (v2.2): 2 nuovi tab — Anagrafica (fornitore, costi, posizione, dimensioni) + Movimenti (entrate/uscite per evento, saldo progressivo)
 - **Pagamenti nell'ordine** (v2.2): Sezione nella modale ordine con tabella storico pagamenti e pulsanti azione
 - **Storico pagamenti cliente** (v2.2): Tabella in pagina Clienti con ultimi 6 movimenti Rossi Srl
