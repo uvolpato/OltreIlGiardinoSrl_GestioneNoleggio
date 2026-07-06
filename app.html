@@ -706,7 +706,6 @@
       font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-left: auto; flex-shrink: 0;
     }
 
-    .gantt-timeline { position: relative; }
     .gantt-head {
       height: 40px; display: flex; align-items: flex-end;
       background: var(--fg-soft);
@@ -1692,6 +1691,31 @@
       color: oklch(45% 0.15 280); font-family: var(--font-mono); font-size: 9px; font-weight: 600;
       margin-left: 6px; letter-spacing: 0.05em; text-transform: uppercase;
     }
+
+    /* ── PD Gantt ── */
+    .gantt-timeline { display: flex; height: 42px; position: relative; }
+    .gantt-timeline .gt-day {
+      width: 42px; flex-shrink: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 0;
+      border-right: 1px solid var(--border);
+      font-size: 10px; line-height: 1.2; cursor: default;
+    }
+    .gantt-timeline .gt-day.gt-weekend { background: color-mix(in oklch, var(--border) 30%, transparent); }
+    .gantt-timeline .gt-day.gt-today { background: var(--accent-soft); font-weight: 700; }
+    .gantt-timeline .gt-weekend .gt-dow { color: var(--muted); }
+    .gantt-timeline .gt-dow { font-family: var(--font-mono); font-size: 8px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em; }
+    .gantt-timeline .gt-num { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--fg); }
+    .gt-today-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--warn); z-index: 5; pointer-events: none; }
+    .gt-today-label { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--warn); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+    .gt-bar {
+      position: absolute; height: 22px; border-radius: 4px; top: 2px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      pointer-events: auto; cursor: pointer; z-index: 3;
+      overflow: hidden; white-space: nowrap; padding: 0 4px;
+    }
+    .gt-bars { position: absolute; top: 42px; left: 0; right: 0; bottom: 0; pointer-events: none; background-image: repeating-linear-gradient(to right, transparent 0px, transparent 41px, var(--border) 41px, var(--border) 42px); }
   </style>
 </head>
 <body>
@@ -4746,15 +4770,16 @@
       lbl.innerHTML = lblHtml;
 
       // replace bars container
-      var existingBars = vp.querySelector('.gt-bars');
+      var tlEl = document.getElementById('pd-gantt-timeline');
+      var existingBars = tlEl.querySelector('.gt-bars');
       if (!existingBars) {
         var barsDiv = document.createElement('div');
         barsDiv.className = 'gt-bars';
-        barsDiv.style.position = 'absolute'; barsDiv.style.top = '30px';
+        barsDiv.style.position = 'absolute'; barsDiv.style.top = '42px';
         barsDiv.style.left = '0'; barsDiv.style.right = '0'; barsDiv.style.bottom = '0';
         barsDiv.style.pointerEvents = 'none';
         barsDiv.innerHTML = barHtml;
-        vp.querySelector('.gantt').appendChild(barsDiv);
+        tlEl.appendChild(barsDiv);
       } else {
         existingBars.innerHTML = barHtml;
       }
