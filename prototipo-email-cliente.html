@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo Gestione Noleggi — Riepilogo per Cliente</title>
+<style>
+  :root {
+    --bg: oklch(97% 0.004 145);
+    --surface: oklch(100% 0 0);
+    --fg: oklch(18% 0.012 145);
+    --muted: oklch(50% 0.012 145);
+    --border: oklch(91% 0.006 145);
+    --accent: oklch(52% 0.14 155);
+    --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
+    --success: oklch(55% 0.15 145);
+    --warn: oklch(65% 0.15 80);
+    --danger: oklch(55% 0.18 25);
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 780px; margin: 0 auto; padding: 40px 24px; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 20px; margin: 36px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 0 0 12px; color: var(--fg); }
+  .subtitle { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
+  .meta { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .badge-green { background: color-mix(in oklch, var(--success) 14%, transparent); color: var(--success); }
+  .badge-amber { background: color-mix(in oklch, var(--warn) 14%, transparent); color: oklch(50% 0.14 80); }
+  .badge-blue  { background: color-mix(in oklch, oklch(55% 0.15 250) 14%, transparent); color: oklch(45% 0.15 250); }
+
+  .hero {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px 32px; margin-bottom: 28px;
+  }
+  .hero-links { margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero-links a {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: var(--surface); }
+  .btn-secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0 24px; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th {
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted);
+    background: var(--bg);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: color-mix(in oklch, var(--fg) 3%, transparent); }
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .arch-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; margin: 16px 0 24px;
+  }
+  .arch-flow { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+  .arch-node {
+    background: var(--accent-soft); border: 2px solid var(--accent);
+    border-radius: 10px; padding: 12px 20px; text-align: center;
+    font-weight: 600; font-size: 13px; min-width: 140px;
+  }
+  .arch-node.gray { background: var(--fg-soft); border-color: var(--border); color: var(--muted); }
+  .arch-arrow { font-size: 22px; color: var(--muted); }
+  .arch-dir { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  @media (max-width: 600px) {
+    .container { padding: 20px 16px; }
+    .hero { padding: 20px; }
+    .arch-flow { flex-direction: column; }
+    .arch-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="hero">
+  <h1>Oltre Il Giardino SRL</h1>
+  <p class="subtitle">Prototipo Gestione Noleggi — Riepilogo per il Cliente</p>
+  <p style="margin:0"><span class="badge badge-green">v2.1</span> <span class="meta">· 24 Giugno 2026 · Specifica tecnica + prototipo interattivo</span></p>
+  <div class="hero-links">
+    <a class="btn-primary" href="https://uvolpato.github.io/OltreIlGiardinoSrl_GestioneNoleggio/" target="_blank">&#9654; Vai al Prototipo</a>
+    <a class="btn-secondary" href="https://github.com/uvolpato/OltreIlGiardinoSrl_GestioneNoleggio" target="_blank">&#9432; Repository GitHub</a>
+  </div>
+</div>
+
+<h2>1. Cosa abbiamo costruito</h2>
+
+<p>Prototipo web interattivo (<strong>HTML/CSS/JS vanilla</strong>, nessuna dipendenza esterna) con <strong>8 schermate</strong> collegate in SPA, dati reali dal vostro sito e dal catalogo prodotti.</p>
+
+<div class="table-wrap">
+<table>
+  <tr><th>Schermata</th><th>Contenuto</th></tr>
+  <tr><td><strong>Dashboard</strong></td><td>4 KPI box + Diagramma Gantt a 3 settimane con barre ordini cliccabili + elenco ordini nel periodo + card Preventivi in scadenza, Disponibilità critica, Ultimi movimenti DDT</td></tr>
+  <tr><td><strong>Catalogo Prodotti</strong></td><td>20 prodotti suddivisi in 5 categorie (Sedute, Tavoli, Luci, Mobili, Accessori) con foto reali dal sito, filtri, pill disponibilità</td></tr>
+  <tr><td><strong>Dettaglio Prodotto</strong></td><td>Immagine hero + 4 tab: Scheda Tecnica (specifiche, fornitore), Listino (4 tariffe), Galleria (6 thumbnail con zoom popup), Disponibilità (Gantt interattivo con legenda e sparkline)</td></tr>
+  <tr><td><strong>Calendario Eventi</strong></td><td>Gantt a 2 mesi (Giu–Lug) con tutti gli eventi ordinati, filtri, legenda, click per aprire modale dettaglio ordine</td></tr>
+  <tr><td><strong>Preventivi</strong></td><td>Tabella con 7 preventivi, 5 stati filtrabili + pulsante "Nuovo Preventivo" (modale a 3 step: dati → righe articoli → riepilogo)</td></tr>
+  <tr><td><strong>Ordini</strong></td><td>Tabella con 6 ordini, click per aprire modale dettaglio con Timeline stato, Dati Evento, Costi, Righe Ordine, DDT associati, Foto allestimento (zoom navigabile), Questionario AI</td></tr>
+  <tr><td><strong>Logistica</strong></td><td>Anagrafica contenitori (casse, palette, carrelli), movimenti interni, riferimenti documenti dal gestionale</td></tr>
+  <tr><td><strong>Clienti</strong></td><td>Tabella 7 clienti con ragione sociale, partita IVA, contatti, telefono, storico ordini</td></tr>
+</table>
+</div>
+
+<h2>2. Le vostre obiezioni — come le abbiamo risolte</h2>
+
+<div class="table-wrap">
+<table>
+  <tr><th>#</th><th>Obiezione</th><th>Soluzione in v2.1</th></tr>
+  <tr>
+    <td class="num">1</td>
+    <td><strong>Logistica nella simulazione preventivo</strong></td>
+    <td>Nuovo Step 2b nel wizard: selezione contenitori (casse, palette), calcolo volume automatico, form vincoli consegna (ZTL, orari, muletti)</td>
+  </tr>
+  <tr>
+    <td class="num">2</td>
+    <td><strong>Modifica manuale importi</strong></td>
+    <td>Checkbox "Prezzo manuale" per riga + override diretto. Prezzo fisso o percentuale</td>
+  </tr>
+  <tr>
+    <td class="num">3</td>
+    <td><strong>Modifica immagini prodotti</strong></td>
+    <td>Gestito nell'anagrafica prodotto (scheda Immagini), non in preventivo</td>
+  </tr>
+  <tr>
+    <td class="num">4</td>
+    <td><strong>Prodotti composti</strong></td>
+    <td>Nuovo tipo articolo <code>composito</code>: si espande in sotto-righe (es. Bancone Pallet = piano cavalletti × 2). Ogni sotto-riga con propria qtà e disponibilità</td>
+  </tr>
+  <tr>
+    <td class="num">5</td>
+    <td><strong>Note ai singoli prodotti</strong></td>
+    <td>Campo <code>note</code> testuale per riga ordine, visibile in tabella e riepilogo</td>
+  </tr>
+  <tr>
+    <td class="num">6</td>
+    <td><strong>Sconto</strong></td>
+    <td>Già presente: sconto % per riga + sconto globale. Aggiunto: <strong>importo fisso per riga</strong></td>
+  </tr>
+  <tr>
+    <td class="num">7</td>
+    <td><strong>IVA / non IVA</strong></td>
+    <td>Colonna <code>aliquota_iva</code> per riga (22%, 4%, esente). Cauzioni = esenti. Subtotale imponibile + IVA + totale</td>
+  </tr>
+  <tr>
+    <td class="num">8</td>
+    <td><strong>Pagamenti + storico</strong></td>
+    <td>Nuova sezione: tipo (bonifico, assegno, contanti), scadenza, stato, data incasso. Storico pagamenti cliente visibile in anagrafica</td>
+  </tr>
+  <tr>
+    <td class="num">9</td>
+    <td><strong>Generare DDT e fattura?</strong></td>
+    <td>Questo sistema <strong>non genera</strong> documenti contabili. Comunica lo stato ordine al <strong>gestionale esterno</strong> che genera DDT/fatture e restituisce i riferimenti</td>
+  </tr>
+  <tr>
+    <td class="num">10</td>
+    <td><strong>Anagrafica dettagliata prodotto</strong></td>
+    <td>Nuova scheda: fornitore (nome + contatti), data/costo acquisto, posizione magazzino, note logistiche. Dimensioni, peso, volume per calcolo logistico</td>
+  </tr>
+  <tr>
+    <td class="num">11</td>
+    <td><strong>Entrate/uscite per evento</strong></td>
+    <td>Nuova tabella Movimenti: cronologia eventi con saldo progressivo (stile Excel disponibilità)</td>
+  </tr>
+  <tr>
+    <td class="num">12</td>
+    <td><strong>Casse, ceste, palette, carrelli</strong></td>
+    <td>Nuova anagrafica <code>contenitori</code>: codice, tipo, dimensioni, peso. Associabili alle righe ordine</td>
+  </tr>
+  <tr>
+    <td class="num">13</td>
+    <td><strong>Calcolo pesi e volumi</strong></td>
+    <td>Ogni articolo ha L×P×H + peso. Volume = ∑(qtà × volume). Mostrato in preventivo e logistica</td></tr>
+  <tr>
+    <td class="num">14</td>
+    <td><strong>Documento logistico</strong></td>
+    <td>Form ordine: ZTL, Area C, muletti, personale, orari, note trasportatore &#8594; PDF esportabile</td>
+  </tr>
+  <tr>
+    <td class="num">15</td>
+    <td><strong>Volume totale spedizione</strong></td>
+    <td>Calcolato automaticamente, visibile in riepilogo preventivo e logistica</td>
+  </tr>
+  <tr>
+    <td class="num">16</td>
+    <td><strong>Carrello sito &#8594; codice &#8594; offerta</strong></td>
+    <td>Nuova pagina "Offerte da Sito": codici univoci dal carrello e-commerce &#8594; wizard preventivo precompilato</td>
+  </tr>
+  <tr>
+    <td class="num">17</td>
+    <td><strong>Imballi/accessori lasciati al cliente</strong></td>
+    <td>Campo <code>materiali_lasciati</code> in logistica: cosa, qtà, data rientro previsto. Visibile nell'ordine</td>
+  </tr>
+  <tr>
+    <td class="num">18</td>
+    <td><strong>Foto allestimento</strong></td>
+    <td>Griglia thumbnail nell'ordine, zoom overlay con navigazione <span style="font-family:var(--font-mono)">&#9664; / &#9654;</span>, contatore, didascalia</td>
+  </tr>
+  <tr>
+    <td class="num">19</td>
+    <td><strong>Questionario per AI</strong></td>
+    <td>9 campi (qualità, venue, accesso, puntualità, danni, feedback, miglioramenti, tag) per addestrare il calcolo dell'impegnato probabile</td>
+  </tr>
+</table>
+</div>
+
+<h2>3. Architettura del sistema</h2>
+
+<div class="arch-box">
+  <div class="arch-flow">
+    <div class="arch-node">
+      Gestione Noleggi<br>
+      <span class="arch-dir">preventivi, ordini,<br>disponibilità, logistica,<br>foto, questionari</span>
+    </div>
+    <div class="arch-arrow">&#8594;</div>
+    <div class="arch-node gray">
+      Questo sistema<br>
+      <span class="arch-dir">traccia stati ordine:<br>confermato &rarr; completato</span>
+    </div>
+    <div class="arch-arrow">&#8594;</div>
+    <div class="arch-node gray">
+      API / CSV / Webhook<br>
+      <span class="arch-dir">scambio dati bidirezionale</span>
+    </div>
+    <div class="arch-arrow">&#8594;</div>
+    <div class="arch-node">
+      Gestionale Esterno<br>
+      <span class="arch-dir">DDT, fatture, note credito,<br>giacenze valorizzate</span>
+    </div>
+  </div>
+
+  <p style="margin:16px 0 0;font-size:13px;">
+    <strong>Flusso:</strong> Questo sistema traccia lo stato dell'ordine (confermato &#8594; in allestimento &#8594; in corso &#8594; completato) e lo comunica al gestionale esterno. Il gestionale genera i documenti contabili (DDT, fatture) e restituisce le giacenze aggiornate. <strong>Nessun documento fiscale</strong> viene generato da questo sistema.
+  </p>
+</div>
+
+<div class="table-wrap">
+<table>
+  <tr><th>Direzione</th><th>Dato</th><th>Trigger</th></tr>
+  <tr><td>Questo sistema &#8594; Gestionale</td><td>Ordine confermato (cliente, righe, date, importi)</td><td>Preventivo &#8594; Ordine</td></tr>
+  <tr><td>Questo sistema &#8594; Gestionale</td><td>Ordine in allestimento (merce in carico)</td><td>Cambio stato</td></tr>
+  <tr><td>Questo sistema &#8594; Gestionale</td><td>Ordine in corso (merce consegnata)</td><td>Cambio stato</td></tr>
+  <tr><td>Questo sistema &#8594; Gestionale</td><td>Ordine completato (rientro con qta danneggiate)</td><td>Cambio stato</td></tr>
+  <tr><td>Questo sistema &#8594; Gestionale</td><td>Anagrafiche clienti nuove/modificate</td><td>Sync periodico</td></tr>
+  <tr><td>Gestionale &#8594; Questo sistema</td><td>Giacenze magazzino aggiornate</td><td>Batch giornaliero / on-demand</td></tr>
+  <tr><td>Gestionale &#8594; Questo sistema</td><td>DDT generato (numero, data, tipo, URL)</td><td>Ordine in allestimento</td></tr>
+  <tr><td>Gestionale &#8594; Questo sistema</td><td>Fattura emessa (numero, data, importo, XML)</td><td>Ordine completato</td></tr>
+  <tr><td>Gestionale &#8594; Questo sistema</td><td>Saldo cliente / partitario</td><td>Su richiesta</td></tr>
+</table>
+</div>
+
+<h2>4. Piano di sviluppo</h2>
+
+<div class="table-wrap">
+<table>
+  <tr><th>Fase</th><th>Durata</th><th>Cosa include</th></tr>
+  <tr><td><strong>Fase 1 — Setup</strong></td><td class="num">2 settimane</td><td>Frontend + backend in dev, DB PostgreSQL migrato, auth JWT</td></tr>
+  <tr><td><strong>Fase 2 — Catalogo e Clienti</strong></td><td class="num">2 settimane</td><td>CRUD clienti, prodotti, categorie, prodotti composti, contenitori. Upload immagini</td></tr>
+  <tr><td><strong>Fase 3 — Preventivi</strong></td><td class="num">3 settimane</td><td>Wizard completo: dati ordine, righe con disponibilità 3 livelli (V/T/P), IVA, sconti, logistica Step 2b, PDF esportabile</td></tr>
+  <tr><td><strong>Fase 4 — Ordini e Logistica</strong></td><td class="num">3 settimane</td><td>Trasformazione preventivo &#8594; ordine, cambio stato, timeline, foto allestimento, questionario AI, contenitori/volumi, documento logistico PDF</td></tr>
+  <tr><td><strong>Fase 5 — Pagamenti e Documenti</strong></td><td class="num">2 settimane</td><td>Gestione pagamenti + storico, ricezione riferimenti DDT/fatture dal gestionale, webhook API</td></tr>
+  <tr><td><strong>Fase 6 — Dashboard e Calendario</strong></td><td class="num">1 settimana</td><td>KPI reali, Gantt eventi aggiornato, solleciti stati</td></tr>
+  <tr><td><strong>Fase 7 — Integrazione Gestionale</strong></td><td class="num">2 settimane</td><td>Sync stati ordine in tempo reale, ricezione giacenze, adapter pattern</td></tr>
+  <tr><td><strong>Fase 8 — Go-live</strong></td><td class="num">1 settimana</td><td>Deploy VPS, test utente, documentazione, formazione</td></tr>
+  <tr><td style="font-weight:600">Totale</td><td class="num" style="font-weight:600">16 settimane</td><td></td></tr>
+</table>
+</div>
+
+<h2>5. Prossimi passi</h2>
+
+<div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+  <ol style="margin:0;padding-left:20px;line-height:1.9;">
+    <li><strong>Validazione del prototipo</strong> — navigare le schermate, verificare che flussi e dati corrispondano alle vostre esigenze. Il prototipo è live all'indirizzo <a href="https://uvolpato.github.io/OltreIlGiardinoSrl_GestioneNoleggio/">uvolpato.github.io/OltreIlGiardinoSrl_GestioneNoleggio</a></li>
+    <li><strong>Condivisione feedback</strong> — raccogliere eventuali modifiche/aggiunte da parte del team (operatori, magazzino, amministrazione)</li>
+    <li><strong>Definizione API gestionale</strong> — chi è il vostro referente tecnico per il gestionale? Serve un incontro per definire il formato dello scambio dati (API REST, webhook, CSV programmato)</li>
+    <li><strong>Via libera allo sviluppo</strong> — validato il prototipo e definite le API, partiamo con la Fase 1</li>
+  </ol>
+</div>
+
+<p style="font-family:var(--font-mono);font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:16px;margin-top:32px;">
+  Specifica Tecnica v2.1 &middot; 24/06/2026 &middot; Prototipo Gestione Noleggi Oltre Il Giardino SRL<br>
+  Realizzato da Ugo Volpato &mdash; AI Consultant
+</p>
+
+</div>
+</body>
+</html>
