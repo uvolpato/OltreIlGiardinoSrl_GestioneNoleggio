@@ -1,8 +1,8 @@
 # Specifica Tecnica — Prototipo Gestione Noleggi Oltre Il Giardino SRL
 
-> **Versione:** 2.0  
+> **Versione:** 2.1  
 > **Data:** 24/06/2026  
-> **Stato:** Specifica aggiornata v2.0  
+> **Stato:** Specifica aggiornata v2.1 — Architettura documentale corretta  
 > **Prossimo passo:** Validazione prototipo → Sviluppo Fase 1
 
 ---
@@ -13,11 +13,11 @@
 
 Oltre Il Giardino SRL opera nel settore del noleggio di suppellettili, arredi, luci e allestimenti per eventi privati e aziendali (matrimoni, cerimonie, fiere, convegni). L'azienda dispone di un catalogo prodotti organizzato in categorie merceologiche.
 
-**Architettura documentale:**
-- **Questo sistema (Gestione Noleggi)** è il sistema autore di tutti i documenti: preventivi, conferme d'ordine, DDT (uscita/ingresso), fatture, note di credito, ricevute. Genera i PDF e li mette a disposizione per la stampa/invio.
-- **Gestionale esterno** è il sistema contabile/fiscale che riceve i movimenti generati da questo sistema per contabilità generale, partita doppia, valorizzazione di magazzino e dichiarativi. I due sistemi dialogano via API o esportazione strutturata.
+**Architettura:**
+- **Questo sistema (Gestione Noleggi)** gestisce il flusso operativo: preventivazione, ordini, tracciamento stato, disponibilità articoli, logistica fisica (contenitori, volumi, documenti logistici). Comunica lo stato degli ordini al gestionale esterno per la generazione dei documenti contabili.
+- **Gestionale esterno** è il sistema contabile/fiscale (es. Zucchetti, TeamSystem) che genera i documenti contabili (DDT, fatture, note di credito) sulla base degli stati ordine comunicati da questo sistema, e restituisce le giacenze di magazzino aggiornate e valorizzate.
 
-Si rende necessario un applicativo web dedicato che gestisca il flusso operativo completo: preventivazione, ordini, documenti di trasporto (DDT), fatturazione, movimentazione fisica della merce, tracciamento stato articoli e disponibilità.
+Si rende necessario un applicativo web dedicato che gestisca il flusso operativo completo: preventivazione, ordini, disponibilità, logistica fisica della merce, tracciamento stato articoli e comunicazione col gestionale per giacenze e documenti contabili.
 
 ### 1.2 Scopo del documento
 
@@ -31,11 +31,11 @@ Il presente documento costituisce la specifica tecnica per la realizzazione di u
 
 | Termine | Descrizione |
 |---|---|---|
-| **Gestionale esterno** | Sistema ERP/contabile esistente che gestisce fiscalità, contabilità generale e valorizzazione magazzino. Riceve dati da questo sistema. |
-| **Questo sistema** | Gestione Noleggi: sistema autore di preventivi, ordini, DDT, fatture e documenti di trasporto |
-| **DDT Uscita** | Documento di Trasporto per carico merce in uscita verso evento (generato da questo sistema, anche in formato PDF) |
-| **DDT Ingresso** | Documento di Trasporto per scarico merce in rientro da evento (generato da questo sistema) |
-| **Fattura** | Documento fiscale emesso da questo sistema e trasmesso al gestionale esterno per contabilità |
+| **Gestionale esterno** | Sistema ERP/contabile esistente che gestisce fiscalità, contabilità generale, valorizzazione magazzino e genera DDT/fatture/note credito a partire dagli stati ordine comunicati da questo sistema |
+| **Questo sistema** | Gestione Noleggi: gestione di preventivi, ordini, disponibilità, logistica fisica. Comunica stati ordine al gestionale |
+| **DDT Uscita** | Documento di Trasporto per carico merce — generato dal gestionale esterno, visibile in questo sistema come riferimento |
+| **DDT Ingresso** | Documento di Trasporto per rientro merce — generato dal gestionale esterno, visibile in questo sistema come riferimento |
+| **Fattura** | Documento fiscale emesso dal gestionale esterno. Questo sistema registra solo il riferimento (numero, data, importo) |
 | **Preventivo** | Ipotesi di noleggio con impegno non vincolante per il periodo indicato |
 | **Ordine** | Trasformazione del preventivo in impegno definitivo |
 | **Articolo** | Prodotto a catalogo (es. "Sedia Chiavari bianca") |
@@ -57,8 +57,8 @@ Il presente documento costituisce la specifica tecnica per la realizzazione di u
 | **ORM** | Prisma (TypeScript-first ORM) |
 | **Database** | PostgreSQL 15+ |
 | **Autenticazione** | JWT (access + refresh token) + Sessioni web |
-| **Documenti** | PDF generation (PDFMake o Puppeteer) |  
-| **Fattura elettronica** | XML generato internamente, invio via API o SDI |
+| **Documenti sistema** | PDF generation per preventivi e conferme (PDFMake o Puppeteer) |  
+| **Documenti contabili** | Generati dal gestionale esterno — questo sistema riceve riferimenti (codice, data, pdf_url) |
 | **Container** | Docker + docker-compose (sviluppo) |
 | **Deploy** | VPS tradizionale (Node + PM2, Nginx reverse proxy) |
 
@@ -101,19 +101,22 @@ Il presente documento costituisce la specifica tecnica per la realizzazione di u
 
                     INTEGRAZIONE CON GESTIONALE ESTERNO
 ┌───────────────────────────────────────────────────────────────┐
-│              GESTIONALE ESISTENTE (es. Zucchetti/TeamSystem)  │
+│           GESTIONALE ESTERNO (es. Zucchetti/TeamSystem)       │
 │                                                               │
-│  ↓ Riceve da questo sistema:                                  │
-│    - Fatture emesse (XML fattura elettronica o API)          │
-│    - Note di credito                                         │
-│    - Movimenti magazzino (carico/scarico valorizzato)        │
-│    - Anagrafiche clienti (sincronizzazione)                   │
+│  ↓ Riceve da questo sistema (stati ordine + anagrafiche):    │
+│    - Ordine confermato (con righe, date, cliente)            │
+│    - Ordine in allestimento                                  │
+│    - Ordine in corso (merce consegnata)                      │
+│    - Ordine completato (merce rientrata)                     │
+│    - Variazioni anagrafiche clienti                          │
 │                                                               │
 │  ↑ Invia a questo sistema:                                   │
-│    - Piano dei conti                                         │
-│    - Aliquote IVA                                            │
+│    - Giacenze aggiornate (quantità fisiche a magazzino)      │
+│    - DDT generati (numero, data, tipo, pdf_url)              │
+│    - Fatture emesse (numero, data, importo, xml_url)         │
+│    - Note di credito                                         │
 │    - Saldo cliente / situazione contabile                    │
-│    - Giacenze valorizzate a magazzino                        │
+│    - Piano dei conti e aliquote IVA                          │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -124,49 +127,55 @@ Il presente documento costituisce la specifica tecnica per la realizzazione di u
 
 ### 2.4 Integrazione con Gestionale Esterno
 
-Il sistema Gestione Noleggi è il **sistema autore** di tutti i documenti operativi. Il gestionale esterno (contabilità/fiscale) è un **sistema ricevente**.
+Il sistema Gestione Noleggi **traccia gli stati dell'ordine** e li comunica al gestionale esterno, che è il **sistema autore dei documenti contabili** (DDT, fatture, note di credito). Il gestionale restituisce i riferimenti dei documenti generati e le giacenze aggiornate.
 
-#### Flusso documentale
+#### Flusso di scambio dati
 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │               QUESTO SISTEMA (Gestione Noleggi)           │
 │                                                           │
-│  Preventivo → Ordine → DDT Uscita → DDT Ingresso        │
-│                                  ↓                        │
-│                            Fattura / Nota Credito         │
+│  Preventivo → Ordine → [stato: allestimento]             │
+│                         [stato: in corso]                 │
+│                         [stato: completato]               │
 │                                                           │
-│  Genera PDF nativamente (Puppeteer/PDFMake)              │
-│  Genera XML fattura elettronica (FatturaPA)              │
-│  Firma digitale dei documenti (firma grafometrica DDT)   │
-└──────────────────────┬───────────────────────────────────┘
-                       │
-                       ▼ API / Export
+│  Comunica al gestionale lo stato e le righe ordine       │
+│  Riceve dal gestionale: giacenze, DDT, fatture           │
+└──────────────┬────────────────────────┬───────────────────┘
+               │  ↑ Stati ordine         │  ↓ Documenti + giacenze
+               │  ↑ Anagrafiche          │  ↓ Riferimenti DDT/fatture
+               ▼ API / Webhook / Export  ▼
 ┌──────────────────────────────────────────────────────────┐
 │              GESTIONALE ESTERNO (contabilità/fiscale)     │
 │                                                           │
-│  ↓ Riceve: fatture XML, note credito,                    │
-│    movimenti magazzino valorizzati                        │
+│  Riceve: ordine con righe → genera DDT Uscita            │
+│          ordine completato → genera DDT Ingresso         │
+│          fine mese → genera Fattura / Nota Credito       │
 │                                                           │
-│  ↑ Invia: saldo cliente, situazione contabile,           │
-│    piani dei conti, aliquote IVA                         │
+│  Invia: giacenze aggiornate, riferimenti DDT/fatture,    │
+│         saldo cliente, aliquote IVA                      │
 └──────────────────────────────────────────────────────────┘
 ```
 
 #### Modalità di integrazione (da definire con il vendor del gestionale)
 
-1. **API REST** — il gestionale espone endpoint per ricevere fatture/note credito e inviare dati contabili
-2. **Esportazione XML/SDI** — le fatture vengono generate in XML FatturaPA e inviate tramite SDI o PEC
-3. **CSV strutturato** — fallback: export/import manuale di file CSV
+1. **API REST** — questo sistema notifica cambiamenti stato; il gestionale risponde con documenti generati e giacenze
+2. **Webhook** — questo sistema invia POST su URL configurato del gestionale a ogni cambio stato
+3. **CSV/JSON strutturato** — fallback: export/import manuale programmato
 
-| Direzione | Dato | Frequenza |
+#### Tabella scambio dati
+
+| Direzione | Dato | Trigger |
 |---|---|---|
-| Questo sistema → Gestionale | Fatture emesse (XML/JSON) | In tempo reale o batch giornaliero |
-| Questo sistema → Gestionale | Note di credito | In tempo reale |
-| Questo sistema → Gestionale | Movimenti magazzino valorizzati (carico/scarico da DDT) | Al momento della conferma DDT |
+| Questo sistema → Gestionale | Ordine confermato (cliente, righe, date, importi) | Trasformazione preventivo → ordine |
+| Questo sistema → Gestionale | Ordine in allestimento (merce in carico) | Cambio stato a `in_allestimento` |
+| Questo sistema → Gestionale | Ordine in corso (merce consegnata) | Cambio stato a `in_corso` |
+| Questo sistema → Gestionale | Ordine completato (merce rientrata, con qta danneggiate) | Cambio stato a `completato` |
 | Questo sistema → Gestionale | Anagrafiche clienti (nuove/modificate) | Sincronizzazione periodica |
-| Gestionale → Questo sistema | Saldo cliente / partitario | Su richiesta o periodico |
-| Gestionale → Questo sistema | Piano dei conti e aliquote IVA | All'avvio / aggiornamenti |
+| Gestionale → Questo sistema | Giacenze magazzino aggiornate (prodotto → qta disponibile) | Batch giornaliero o on-demand |
+| Gestionale → Questo sistema | DDT generato (numero, data, tipo, pdf_url) | Dopo conferma ordine in allestimento |
+| Gestionale → Questo sistema | Fattura emessa (numero, data, importo, xml_url) | Dopo completamento ordine |
+| Gestionale → Questo sistema | Saldo cliente / partitario | Su richiesta |
 
 ### 2.5 Multi-tenancy
 
@@ -261,48 +270,13 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
                     └───────────────────────┬─────────────────────────┘
                       │ 1
                       │ *
-                      ┌──────────────────────┴──────────────────────────┐
-                      │      DDT (Documento di Trasporto)              │
-                      │ id, tenant_id, ordine_id, tipo (uscita/        │
-                      │ ingresso), numero, anno,                       │
-                      │ data_movimento, data_trasporto,                │
-                      │ vettore?, targa?, causale_trasporto,           │
-                      │ firma_consegna?, firma_ritiro?,                │
-                      │ stato (bozza/confermato/annullato),            │
-                      │ pdf_url, created_by, created_at, updated_at    │
-                      └───────────────────────┬────────────────────────┘
-                                              │ 1
-                                              │ *
-                     ┌────────────────────────┴────────────────────────┐
-                     │         DDT_RIGA                                │
-                     │ id, ddt_id, ordine_riga_id, prodotto_id,       │
-                     │ quantita_caricata, quantita_scaricata,          │
-                     │ condizione (ottimo/buono/danneggiato/          │
-                     │ danneggiato_parziale), quantita_danneggiata,    │
-                     │ note                                           │
-                     └─────────────────────────────────────────────────┘
-
-                      │ 1
-                      │ *
-             ┌────────┴─────────────────────────────────────────────┐
-             │               FATTURA                                │
-             │ id, tenant_id, ordine_id, tipo (fattura/             │
-             │ nota_credito/ricevuta), numero, anno,                │
-             │ data_emissione, data_scadenza,                       │
-             │ imponibile, aliquota_iva, importo_iva, totale,      │
-             │ ritenuta_acconto?, stato (bozza/emessa/             │
-             │ annullata), xml_url?, pdf_url,                      │
-             │ codice_destinatario, pec_destinatario,               │
-             │ created_by, created_at, updated_at                   │
-             └──────────────────────────────────────────────────────┘
-                      │ 1
-                      │ *
-             ┌────────┴─────────────────────────────────────────────┐
-             │            FATTURA_RIGA                              │
-             │ id, fattura_id, ddt_riga_id, prodotto_id,           │
-             │ quantita, prezzo_unitario, aliquota_iva,            │
-             │ totale_riga                                         │
-             └──────────────────────────────────────────────────────┘
+                     ┌──────────────────────┴──────────────────────────┐
+                     │   DOCUMENTO_RIFERIMENTO (documenti esterni)   │
+                     │ id, ordine_id, tipo (ddt_uscita/ddt_ingresso/│
+                     │ fattura/nota_credito), codice_doc, data_doc, │
+                     │ importo?, pdf_url?, xml_url?,                │
+                     │ note, created_at, updated_at                 │
+                     └──────────────────────────────────────────────┘
 
                       │ 1
                       │ *
@@ -508,70 +482,40 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
 - `note` TEXT
 - `created_at`
 
-#### 3.2.10 ddt (Documento di Trasporto)
+#### 3.2.10 documento_riferimento
+Tabella che memorizza i riferimenti ai documenti contabili (DDT, fatture, note credito) **generati dal gestionale esterno**. Questo sistema non genera documenti contabili, ma ne riceve i riferimenti per esposizione nell'interfaccia utente.
+
 - `id` UUID PK
-- `tenant_id` UUID FK → tenant
 - `ordine_id` UUID FK → ordine
-- `tipo` ENUM('uscita', 'ingresso')
-- `numero` INTEGER (progressivo annuale per tenant, indipendente per tipo)
-- `anno` INTEGER
-- `data_movimento` DATE
-- `data_trasporto` DATE
-- `vettore` VARCHAR(255) (nome corriere/trasportatore)
-- `targa` VARCHAR(20) (targa mezzo, opzionale)
-- `causale_trasporto` VARCHAR(255) (es. "Noleggio per evento Matrimonio Verdi")
-- `firma_consegna` TEXT (base64 PNG, opzionale)
-- `firma_ritiro` TEXT (base64 PNG, opzionale)
-- `materiali_lasciati` TEXT (imballi/accessori/carrellini lasciati al cliente)
-- `stato` ENUM('bozza', 'confermato', 'annullato')
-- `pdf_url` TEXT (URL al PDF generato)
-- `created_by` UUID FK → user
+- `tipo` ENUM('ddt_uscita', 'ddt_ingresso', 'fattura', 'nota_credito')
+- `codice_doc` VARCHAR(50) (numero documento assegnato dal gestionale, es. "DDT-2026-085")
+- `data_doc` DATE (data di emissione del documento)
+- `importo` DECIMAL(10,2) (importo del documento, se disponibile)
+- `pdf_url` TEXT (URL al PDF generato dal gestionale, se accessibile)
+- `xml_url` TEXT (URL al file XML fattura elettronica, solo per fatture)
+- `note` TEXT (note sul documento)
 - `created_at`, `updated_at`
 
-#### 3.2.10a ddt_riga
+#### 3.2.11 logistica_movimento
+Tabella per il tracciamento logistico interno (non fiscale) — casse, pallet, carrelli caricati per l'evento. Non sostituisce il DDT (generato dal gestionale) ma serve per la gestione operativa del magazzino fisico.
+
 - `id` UUID PK
-- `ddt_id` UUID FK → ddt
-- `ordine_riga_id` UUID FK → ordine_riga
-- `prodotto_id` UUID FK → prodotto
-- `quantita_caricata` INTEGER (in uscita o rientro)
-- `quantita_scaricata` INTEGER (solo in rientro, può differire)
-- `condizione` ENUM('ottimo', 'buono', 'danneggiato', 'danneggiato_parziale') DEFAULT 'ottimo'
-- `quantita_danneggiata` INTEGER DEFAULT 0
+- `ordine_id` UUID FK → ordine
+- `tipo` ENUM('carico', 'scarico')
+- `data_movimento` TIMESTAMP
+- `contenitore_id` UUID FK → contenitore (cassa, pallet, carrello usato)
+- `operatore_id` UUID FK → user
 - `note` TEXT
+- `created_at`
 
-#### 3.2.11 fattura
+#### 3.2.11a logistica_movimento_riga
 - `id` UUID PK
-- `tenant_id` UUID FK → tenant
-- `ordine_id` UUID FK → ordine
-- `tipo` ENUM('fattura', 'nota_credito', 'ricevuta')
-- `numero` INTEGER (progressivo annuale per tenant)
-- `anno` INTEGER
-- `data_emissione` DATE
-- `data_scadenza` DATE
-- `imponibile` DECIMAL(10,2)
-- `aliquota_iva` DECIMAL(5,2) DEFAULT 22.00
-- `importo_iva` DECIMAL(10,2)
-- `ritenuta_acconto` DECIMAL(10,2) DEFAULT 0
-- `totale` DECIMAL(10,2)
-- `stato` ENUM('bozza', 'emessa', 'annullata')
-- `codice_destinatario` VARCHAR(7) (SDI per fattura elettronica)
-- `pec_destinatario` VARCHAR(255)
-- `xml_url` TEXT (URL al file XML fattura elettronica)
-- `pdf_url` TEXT (URL al PDF)
-- `created_by` UUID FK → user
-- `esportata_gestionale` BOOLEAN DEFAULT false (true quando inviata al gestionale esterno)
-- `data_esportazione` TIMESTAMP
-- `created_at`, `updated_at`
-
-#### 3.2.11a fattura_riga
-- `id` UUID PK
-- `fattura_id` UUID FK → fattura
-- `ddt_riga_id` UUID FK → ddt_riga (riferimento al DDT di origine)
+- `movimento_id` UUID FK → logistica_movimento
 - `prodotto_id` UUID FK → prodotto
 - `quantita` INTEGER
-- `prezzo_unitario` DECIMAL(10,2)
-- `aliquota_iva` DECIMAL(5,2) DEFAULT 22.00
-- `totale_riga` DECIMAL(10,2)
+- `condizione` ENUM('ottimo', 'buono', 'danneggiato') DEFAULT 'ottimo'
+- `quantita_danneggiata` INTEGER DEFAULT 0
+- `note` TEXT
 
 #### 3.2.12 pagamento
 - `id` UUID PK
@@ -725,20 +669,25 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
 | GET | `/ordini/:id/pdf` | Scarica PDF ordine / conferma |
 | POST | `/ordini` | Crea ordine diretto (senza preventivo) |
 | PUT | `/ordini/:id` | Aggiorna ordine |
-| PUT | `/ordini/:id/stato` | Cambia stato ordine |
-| POST | `/ordini/:id/ddt` | Crea DDT (uscita o ingresso) per questo ordine |
+| PUT | `/ordini/:id/stato` | Cambia stato ordine (comunicato al gestionale) |
 | DELETE | `/ordini/:id` | Annulla ordine |
 
-#### 4.2.6 Movimenti (DDT)
+#### 4.2.6 Logistica (movimenti interni)
 
 | Metodo | Path | Descrizione |
 |---|---|---|
-| GET | `/movimenti` | Lista movimenti (filtrabile per tipo, ordine, data) |
-| GET | `/movimenti/:id` | Dettaglio movimento con righe |
-| POST | `/movimenti` | Crea movimento (con righe) |
-| PUT | `/movimenti/:id` | Aggiorna movimento (solo bozza) |
-| PUT | `/movimenti/:id/conferma` | Conferma movimento (cambio stato articoli) |
-| GET | `/movimenti/:id/pdf` | Scarica PDF DDT |
+| GET | `/logistica/movimenti` | Lista movimenti logistici interni (carico/scarico contenitori) |
+| GET | `/logistica/movimenti/:id` | Dettaglio movimento logistico con righe |
+| POST | `/logistica/movimenti` | Crea movimento logistico (carico/scarico casse/pallet) |
+| GET | `/logistica/contenitori` | Anagrafica contenitori (casse, pallet, carrelli) |
+| POST | `/logistica/contenitori` | Crea contenitore |
+
+#### 4.2.6b Documenti Riferimento (dal gestionale)
+
+| Metodo | Path | Descrizione |
+|---|---|---|
+| GET | `/ordini/:id/documenti` | Documenti associati a un ordine (DDT, fatture — ricevuti dal gestionale) |
+| POST | `/integrazione/ricevi-documento` | Webhook per ricevere documento contabile dal gestionale (DDT/fattura/nota credito) |
 
 #### 4.2.7 Calendario Eventi
 
@@ -770,7 +719,7 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
 
 ## 5. Flussi Funzionali Dettagliati
 
-### 5.1 Flusso Preventivo → Ordine → DDT → Reso
+### 5.1 Flusso Preventivo → Ordine → Stati → Completato
 
 ```
 1. CREAZIONE PREVENTIVO
@@ -793,36 +742,43 @@ Architettura single-tenant con schema preparato per multi-tenancy futura:
    → Possibile applicare sconti aggiuntivi (%, importo, override)
    → Ordine creato in stato CONFERMATO
    → Preventivo passa a TRASFORMATO
+   → Questo sistema comunica l'ordine confermato al gestionale
+   → Il gestionale genera DDT Uscita e lo comunica a questo sistema
+     (riferimento salvato in documento_riferimento)
 
-3. DDT DI USCITA
-   ──────────────
+3. ALLESTIMENTO / CARICO MERCE
+   ────────────────────────────
    In prossimità dell'evento:
-   → Operatore/magazziniere crea MOVIMENTO tipo USCITA
-   → Seleziona le righe dell'ordine e quantità caricate
-   → Conferma il movimento
-   → Stato articoli: Disponibile → In carico (transitorio)
-   → Opzionale: firma digitale al momento del carico
+   → Operatore/magazziniere registra carico logistico in logistica_movimento
+     (casse, pallet, carrelli — non fiscale, solo tracciamento interno)
+   → Ordine passa a IN_ALLESTIMENTO
+   → Stato comunicato al gestionale
 
-4. CONSEGNA / ALLESTIMENTO
-   ────────────────────────
+4. CONSEGNA / EVENTO IN CORSO
+   ───────────────────────────
    Merce trasportata all'evento e allestita
    → Ordine passa a IN_CORSO
-   → Stato articoli: In carico → In noleggio
+   → Stato comunicato al gestionale
+   → Il gestionale conferma DDT Uscita (aggiorna riferimento)
 
-5. DDT DI INGRESSO
-   ────────────────
+5. RIENTRO / SMONTAGGIO
+   ─────────────────────
    Termine evento / smontaggio:
-   → Operatore/magazziniere crea MOVIMENTO tipo INGRESSO
-   → Per ogni riga, indica quantità RESE e quantità DANNEGGIATE
-   → Conferma il movimento
-   → Stato articoli: In noleggio → Reso (o Danneggiato per alcune qty)
-   → Ordine passa a COMPLETATO (se tutto reso)
+   → Ordine passa a IN_RIENTRO
+   → Operatore registra rientro logistico in logistica_movimento
+   → Per ogni articolo, indica quantità RESE e DANNEGGIATE
 
-6. RIALLINEAMENTO MAGAZZINO
-   ─────────────────────────
-   Periodicamente (o real-time via API):
-   → I movimenti confermati vengono comunicati al gestionale
-   → Il gestionale aggiorna la valorizzazione di magazzino
+6. COMPLETATO
+   ───────────
+   → Ordine passa a COMPLETATO
+   → Stato comunicato al gestionale
+   → Il gestionale:
+     • Genera DDT Ingresso (riferimento → documento_riferimento)
+     • Aggiorna giacenze di magazzino valorizzate
+     • Se necessario, emette fattura / nota credito
+   → Questo sistema riceve giacenze aggiornate via integrazione
+   → La disponibilità per nuovi preventivi si basa su:
+     impegni_ordini + giacenze_gestionale - soglia_sicurezza
 ```
 
 ### 5.2 Gestione Prezzi
@@ -884,8 +840,8 @@ Il sistema tiene traccia delle quantità danneggiate singolarmente (es. su 100 s
 |---|---|
 | **superadmin** | Accesso totale, configurazione sistema, gestione utenti, log, multi-tenant |
 | **admin** | Tutto tranne gestione tenant. Crea/modifica utenti, catalogo, prezzi |
-| **operatore** | Gestione clienti, preventivi, ordini, DDT. NON può modificare prezzi catalogo, utenti, impostazioni |
-| **magazziniere** | Solo DDT (creazione/conferma), consultazione ordini, dashboard |
+| **operatore** | Gestione clienti, preventivi, ordini, logistica. NON può modificare prezzi catalogo, utenti, impostazioni |
+| **magazziniere** | Solo logistica (movimenti carico/scarico), consultazione ordini, dashboard |
 
 I ruoli e i permessi sono **configurabili** tramite tabella `permessi` e associazione `ruolo_permesso`, permettendo di creare ruoli custom in futuro.
 
@@ -974,7 +930,7 @@ L'interfaccia è una **SPA (Single Page Application)** con sidebar laterale fiss
 │ │ Operativo│ │                                              │  │
 │ │ Prevent. │ │                                              │  │
 │ │ Ordini   │ │                                              │  │
-│ │ DDT      │ │                                              │  │
+│ │ Logistica│ │                                              │  │
 │ │ ────     │ │                                              │  │
 │ │ Anagraf. │ │                                              │  │
 │ │ Clienti  │ │                                              │  │
@@ -994,7 +950,7 @@ L'interfaccia è una **SPA (Single Page Application)** con sidebar laterale fiss
 | **Visuale** | Calendario Eventi | `page-calendario` | Sidebar → "Calendario Eventi" |
 | **Operativo** | Preventivi | `page-preventivi` | Sidebar → "Preventivi" |
 | **Operativo** | Ordini | `page-ordini` | Sidebar → "Ordini" |
-| **Operativo** | DDT / Movimenti | `page-ddt` | Sidebar → "DDT / Movimenti" |
+| **Operativo** | Logistica | `page-logistica` | Sidebar → "Logistica" |
 | **Anagrafiche** | Clienti | `page-clienti` | Sidebar → "Clienti" |
 
 ### 8.3 Descrizione Pagina per Pagina
@@ -1007,7 +963,7 @@ L'interfaccia è una **SPA (Single Page Application)** con sidebar laterale fiss
 
 **Layout:**
 - Topbar: titolo "Dashboard" + timestamp ultimo aggiornamento + pulsante "Nuovo Preventivo"
-- Contenuto: griglia KPI (4 colonne) → griglia 2:1 (tabella ordini + pannelli laterali) → tabella DDT
+- Contenuto: griglia KPI (4 colonne) → griglia 2:1 (tabella ordini + pannelli laterali) → tabella Prossime Spedizioni
 
 **Sezione A — KPI Cards (4 colonne):**
 
@@ -1038,15 +994,15 @@ Ogni KPI ha una sottoriga con variazione vs mese precedente o contesto aggiuntiv
 1. **Preventivi in Scadenza** — lista compatta con: nome cliente, importo, merce, pill scadenza (rosso <3gg, giallo <7gg)
 2. **Disponibilità Critica** — lista prodotti con disponibilità residua vs totale, colorata in base a soglia
 
-**Sezione C — Tabella "Ultimi Movimenti (DDT)":**
+**Sezione C — Tabella "Prossime Spedizioni":**
 
 | Colonna | Tipo | Note |
 |---|---|---|
-| DDT | `#YYYY/NNN` monospace | |
-| Tipo | pill `pill-red` = Uscita, `pill-green` = Ingresso | |
-| Ordine | `#YYYY/NNN` link | |
-| Data | `DD/MM/YYYY` | |
-| Articoli | testo compatto (es. "120 sedie, 15 tavoli") | |
+| Ordine | `#YYYY/NNN` monospace link | |
+| Cliente | testo | |
+| Evento | testo | |
+| Allestimento | data `DD/MM` | |
+| Qtà | monospace | "89 pz · 320 kg" |
 | Stato | pill colore | |
 
 **API necessarie:**
@@ -1054,11 +1010,11 @@ Ogni KPI ha una sottoriga con variazione vs mese precedente o contesto aggiuntiv
 - `GET /dashboard/impegni-prossimi` → tabella ordini imminenti
 - `GET /dashboard/preventivi-scaduti` → lista preventivi in scadenza
 - `GET /dashboard/disponibilita-critica` → prodotti sotto soglia
-- `GET /movimenti?limit=5&sort=-data` → ultimi DDT
+- `GET /dashboard/prossime-spedizioni?limit=5` → prossime uscite
 
 **Interazioni:**
 - Click su riga ordine → apre modale dettaglio ordine
-- Click su "Vedi tutti →" (DDT) → naviga a `page-ddt`
+- Click su "Vedi tutti →" (spedizioni) → naviga a `page-logistica`
 - Click "+ Nuovo Preventivo" → apre modale wizard multi-step (prototipato)
 
 ---
@@ -1417,9 +1373,9 @@ Ogni riga evento mostra:
 | Stato | Pill | Colore | Transizione successiva |
 |---|---|---|---|
 | Bozza | `pill-gray` | Grigio | → Confermato |
-| Confermato | `pill-blue` | Blu | → DDT Uscita |
+| Confermato | `pill-blue` | Blu | → Allestimento |
 | In allestimento | `pill-green` | Verde | → In corso |
-| In corso | `pill-amber` | Arancio | → DDT Ingresso |
+| In corso | `pill-amber` | Arancio | → Rientro |
 | In rientro | `pill-amber` | Arancio | → Completato |
 | Completato | `pill-green` | Verde | (finale) |
 
@@ -1434,15 +1390,15 @@ Ogni riga evento mostra:
 
 #### 8.3.7 Dettaglio Ordine (modale `order-modal`)
 
-**Purpose:** Vista completa di un ordine — timeline stato, dati evento, righe ordine, riepilogo costi, DDT associati, foto allestimento, questionario post-evento per AI. Aperta come modale sovrapposta alla pagina corrente.
+**Purpose:** Vista completa di un ordine — timeline stato, dati evento, righe ordine, riepilogo costi, documenti contabili dal gestionale, foto allestimento, questionario post-evento per AI. Aperta come modale sovrapposta alla pagina corrente.
 
 **Layout:**
 - Overlay con backdrop blur, chiusura con ✕, click fuori o tasto Esc
-- Header: numero ordine + pill stato + pulsanti "Scarica PDF" e "Crea DDT Uscita"
+- Header: numero ordine + pill stato + pulsante "Scarica PDF"
 - Timeline stato (componente a tutta larghezza)
 - Griglia 2 colonne (dati evento + riepilogo costi)
 - Tabella righe ordine
-- Tabella DDT associati
+- Tabella documenti contabili (dal gestionale)
 - Griglia foto allestimento (con zoom)
 - Questionario post-evento AI
 
@@ -1451,18 +1407,17 @@ Ogni riga evento mostra:
 Componente visivo a 6 step con linee connesse:
 
 ```
-●───────────●───────────●───────────○───────────○───────────○
-Confermato   DDT Uscita  Allestimento In corso   DDT Ingresso Completato
-(done)       (done)      (active)     (pending)  (pending)    (pending)
+●───────────●───────────●───────────○───────────○
+Confermato   Allestimento In corso   Rientro    Completato
+(done)       (done)      (active)     (pending)  (pending)
 ```
 
 | Step | Stati corrispondenti | Colore when done | Colore when active |
-|---|---|---|---|
+|---|---|---|---|---|
 | Confermato | `confermato` | Verde | — |
-| DDT Uscita | `in_allestimento` (dopo DDT) | Verde | — |
-| In allestimento | `in_allestimento` | — | Accent + glow |
+| Allestimento | `in_allestimento` (comunicato al gestionale → DDT Uscita) | Verde | Accent + glow |
 | In corso | `in_corso` | — | Accent |
-| DDT Ingresso | `in_rientro` | — | Accent |
+| Rientro | `in_rientro` (comunicato al gestionale → DDT Ingresso) | — | Accent |
 | Completato | `completato` | Verde | — |
 
 **Sezione B — Griglia 2 colonne**
@@ -1500,22 +1455,21 @@ Sotto: card "Note logistiche" con testo libero su sfondo `--fg-soft`.
 | Sconto | monospace | — / −10% |
 | Totale riga | monospace | € 200,00 |
 
-**Sezione D — DDT Associati:**
+**Sezione D — Documenti Contabili (dal Gestionale):**
 
-Tabella con DDT collegati all'ordine (uscita e ingresso):
+Riferimenti ai documenti generati dal gestionale esterno per questo ordine:
 
-| Colonna | Tipo |
-|---|---|
-| DDT | monospace `#YYYY/NNN` |
-| Tipo | pill `pill-red` Uscita / `pill-green` Ingresso |
-| Data | monospace |
-| Articoli | testo compatto |
-| Stato | pill colore |
-| Azioni | "PDF →" |
+| Colonna | Tipo | Note |
+|---|---|---|
+| Documento | monospace `DDT-2026-085` | Codice assegnato dal gestionale |
+| Tipo | pill | Uscita / Ingresso / Fattura |
+| Data | monospace | Data emissione documento |
+| Importo | monospace | Solo per fatture |
+| PDF | link | "PDF →" se disponibile (hostato dal gestionale) |
 
 **API necessarie:**
 - `GET /ordini/:id` → dati ordine + righe
-- `GET /movimenti?ordineId=:id` → DDT associati
+- `GET /ordini/:id/documenti` → documenti ricevuti dal gestionale
 
 **Sezione E — Foto Allestimento:**
 
@@ -1560,7 +1514,7 @@ Form strutturato per raccogliere feedback post-evento e addestrare l'AI sull'ido
 
 **API necessarie:**
 - `GET /ordini/:id` → dati ordine + righe
-- `GET /movimenti?ordineId=:id` → DDT associati
+- `GET /ordini/:id/documenti` → documenti contabili dal gestionale
 - `GET /ordini/:id/foto` → lista foto allestimento
 - `POST /ordini/:id/foto` → upload foto (multipart/form-data)
 - `GET /ordini/:id/questionario` → dati questionario AI
@@ -1569,8 +1523,7 @@ Form strutturato per raccogliere feedback post-evento e addestrare l'AI sull'ido
 **Interazioni:**
 - Click ✕ / click fuori / Esc → chiudi modale
 - Click "Scarica PDF" → download PDF ordine
-- Click "Crea DDT Uscita" → wizard DDT (Fase 3)
-- Click "PDF →" su DDT → download PDF DDT
+- Click "PDF →" su documento → apre PDF documento (hostato dal gestionale)
 - Click su foto → zoom overlay con navigazione ◀/▶
 - Click ✕ / fuori / Esc (zoom) → chiudi zoom
 - Click stelle → aggiorna rating
@@ -1581,43 +1534,64 @@ Form strutturato per raccogliere feedback post-evento e addestrare l'AI sull'ido
 
 ---
 
-#### 8.3.8 DDT / Movimenti (`page-ddt`)
+#### 8.3.8 Logistica (`page-logistica`)
 
-**Purpose:** Elenco documenti di trasporto (DDT di uscita e ingresso) — traccia ogni movimento fisico della merce.
+**Purpose:** Gestione logistica fisica — tracciamento contenitori (casse, pallet, carrelli), volumi, pesi e documentazione per il trasporto. I documenti contabili (DDT, fatture) sono generati dal gestionale esterno e visibili in questa pagina come riferimenti.
 
 **Layout:**
-- Topbar: titolo "DDT / Movimenti" + pulsante "+ Nuovo DDT"
-- Filtri: ricerca testo + select tipo (Uscita/Ingresso) + select stato
-- Tabella DDT
+- Topbar: titolo "Logistica" + pulsante "+ Movimento Carico/Scarico"
+- Riquadro "Prossime Spedizioni" — ordini imminenti (stato `in_allestimento`) con badge peso/volume
+- Sezione "Contenitori" — anagrafica casse/pallet/carrelli
+- Sezione "Documenti dal Gestionale" — tabella riferimenti DDT/fatture ricevuti
 
-**Tabella DDT:**
+**Sezione A — Prossime Spedizioni:**
 
 | Colonna | Tipo | Formato |
 |---|---|---|
-| DDT | monospace | `#YYYY/NNN` |
-| Tipo | pill | `pill-red` = Uscita, `pill-green` = Ingresso |
 | Ordine | monospace link | `#YYYY/NNN` |
-| Cliente | testo | |
-| Data | monospace | `DD/MM/YYYY` |
+| Cliente — Evento | testo | |
+| Allestimento | monospace | `DD/MM HH:MM` |
+| Periodo noleggio | monospace | `DD/MM → DD/MM` |
 | Articoli | testo | "6 righe · 89 pz" |
-| Stato | pill | `pill-green` = Confermato, `pill-gray` = Bozza |
-| Azioni | — | "Apri →" |
+| Peso stimato | monospace | "320 kg" |
+| Volume stimato | monospace | "4,2 m³" |
+| ZTL / Note log. | testo | "ZTL Lun-Ven 7:30-9:30" |
+| Azioni | — | "Piano di Carico" → |
 
-**Filtri:**
+**Sezione B — Anagrafica Contenitori:**
 
-| Filtro | Tipo | Opzioni |
+| Colonna | Tipo | Formato |
 |---|---|---|
-| Ricerca | `input text` | Per numero DDT, numero ordine |
-| Tipo | `select` | Tutti, Uscita, Ingresso |
-| Stato | `select` | Tutti, Bozza, Confermato |
+| Codice | monospace | `CST-001` |
+| Tipo | pill | Cassa / Pallet / Carrello / Cesta |
+| Dimensioni | testo | `120×80×70 cm` |
+| Portata max | monospace | "500 kg" |
+| Peso | monospace | "15 kg" |
+| Assegnato a | link | Ordine `#YYYY/NNN` |
+| Stato | pill | `pill-blue` In uso / `pill-green` Libero |
+
+**Sezione C — Documenti dal Gestionale:**
+
+Tabella che mostra i riferimenti ai documenti contabili generati dal gestionale:
+
+| Colonna | Tipo | Note |
+|---|---|---|
+| Documento | monospace | `DDT-2026-085` (codice_doc dal gestionale) |
+| Tipo | pill | `pill-red` Uscita / `pill-green` Ingresso / `pill-blue` Fattura |
+| Ordine | monospace link | `#YYYY/NNN` |
+| Data | monospace | `DD/MM/YYYY` |
+| Importo | monospace | Solo per fatture |
+| PDF | link | "PDF →" se pdf_url disponibile |
 
 **API necessarie:**
-- `GET /movimenti?page=N&limit=20&tipo=X&stato=X&q=testo` → lista paginata
+- `GET /ordini?stato=in_allestimento` → prossime spedizioni
+- `GET /logistica/contenitori` → anagrafica contenitori
+- `GET /ordini/:id/documenti` → documenti contabili ricevuti dal gestionale
 
 **Interazioni:**
-- Click "Apri →" → dettaglio DDT (non prototipato, Fase 3)
-- Click "+ Nuovo DDT" → wizard creazione DDT (Fase 3)
-- Click su "Ordine" link → naviga a dettaglio ordine
+- Click su "Piano di Carico" → apre modale documento logistico (ZTL, orari, personale)
+- Click su "PDF →" → apre PDF del documento (se presente, hostato dal gestionale)
+- Click "+ Movimento Carico/Scarico" → registra carico/scarico contenitori per ordine
 
 ---
 
@@ -1712,14 +1686,14 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | **Sconto globale** | Già presente | Nessuna modifica |
 | **IVA / non IVA** | Non gestito | Nuova colonna "Aliquota IVA" per riga (22%, 10%, 4%, 0% esente). Subtotale imponibile + IVA + totale nel riepilogo |
 | **Pagamenti e storico** | Non presente | Nuova sezione Pagamenti nell'ordine + storico pagamenti nell'anagrafica cliente |
-| **Generazione DDT/Fattura** | Non presente | Pulsanti "Genera DDT" e "Genera Fattura" nell'ordine. Il sistema è autore dei documenti (vedi §2.4) |
+| **Generazione DDT/Fattura** | **Non di competenza di questo sistema** | I documenti contabili (DDT, fatture, note credito) sono **generati dal gestionale esterno**. Questo sistema comunica lo stato ordine, il gestionale genera i documenti e li restituisce come riferimenti (codice, data, pdf_url). Vedi §2.4 per lo schema d'integrazione. |
 
 ### 11.2 Catalogo Prodotti — Integrazioni richieste
 
 | Funzionalità | Stato attuale | Modifica necessaria |
 |---|---|---|
 | **Anagrafica dettagliata** | Parziale | Nuova scheda "Anagrafica" nel dettaglio prodotto: fornitore (nome, contatti, data acquisto, costo acquisto), posizione magazzino, note logistiche |
-| **Tabella entrate/uscite per evento** | Non presente | Nuova tab "Movimenti": tabella cronologica con evento/qta/tipo (DDT uscita/rientro/acquisto/manutenzione), saldo progressivo stile Excel |
+| **Tabella entrate/uscite per evento** | Non presente | Nuova tab "Movimenti": tabella cronologica con evento/qta/tipo (uscita/rientro/acquisto/manutenzione), saldo progressivo stile Excel |
 
 ### 11.3 Logistica — Nuove funzionalità
 
@@ -1740,7 +1714,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 
 | Funzionalità | Descrizione |
 |---|---|
-| **Materiali lasciati al cliente** | Nuovo campo "Materiali lasciati in sede" nella sezione DDT: imballi, accessori, carrellini, quantità, data previsto rientro |
+| **Materiali lasciati al cliente** | Nuovo campo "Materiali lasciati in sede" nella sezione Logistica: imballi, accessori, carrellini, quantità, data previsto rientro |
 | **Foto allestimento** | Già presente nella modale ordine. Estendere con upload e cattura da dispositivo mobile |
 | **Questionario AI** | Già presente nella modale ordine. I dati raccolti alimentano il calcolo impegnato probabile |
 
@@ -1755,7 +1729,8 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | P1 | Pagamenti e storico | Fase 1 |
 | P1 | Anagrafica dettagliata + Movimenti catalogo | Fase 1 |
 | P2 | Documento logistico PDF | Fase 2 |
-| P2 | DDT/Fattura (generazione documenti) | Fase 2 |
+| P2 | Documenti contabili (ricezione riferimenti dal gestionale) | Fase 2 |
+| P2 | Integrazione gestionale (sync stati ordine) | Fase 2 |
 | P2 | Note operative materiali lasciati | Fase 2 |
 | P3 | Codice univoco carrello sito → offerta | Fase 3 |
 
@@ -1770,7 +1745,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | **Fase 0 — Setup** | 1 settimana | Setup repo, ambiente dev (Docker), CI/CD base, scheletro frontend/backend, Prisma schema, migrazioni DB |
 | **Fase 1 — Core** | 3 settimane | Auth + ruoli, CRUD clienti, CRUD catalogo (categorie + prodotti + anagrafica + compositi + contenitori) |
 | **Fase 2 — Preventivi** | 3 settimane | Wizard completo (Step 1-2-2b-3), IVA, sconti per riga/globali, override prezzo, note riga, PDF |
-| **Fase 3 — Ordini e DDT** | 3 settimane | Trasformazione preventivo→ordine, DDT uscita/ingresso, fattura, pagamenti, materiali lasciati, documento logistico |
+| **Fase 3 — Ordini e Logistica** | 3 settimane | Trasformazione preventivo→ordine, stati ordine, logistica (contenitori, volumi, documento logistico), pagamenti, materiali lasciati, integrazione gestionale (sync stati ordine) |
 | **Fase 4 — Dashboard** | 1 settimana | KPI, report, Gantt eventi, vista solleciti |
 | **Fase 5 — Gestionale** | 2 settimane | Integrazione API gestionale (adapter pattern), sincronizzazione, log |
 | **Fase 6 — Rifiniture** | 1 settimana | Testing E2E, responsive design, performance tuning, deploy VPS |
@@ -1784,10 +1759,10 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | M1 | Setup completato | Frontend e backend in esecuzione in dev, DB migrato |
 | M2 | Catalogo e clienti | CRUD completo clienti, prodotti, categorie, compositi, contenitori |
 | M3 | Preventivi | Wizard preventivo completo con IVA, sconti, logistica, PDF stampabile |
-| M4 | Ordini e DDT | Trasformazione ordine, DDT uscita/ingresso, cambio stato articoli |
-| M5 | Fatture e pagamenti | Generazione fattura/nota credito, tracciamento pagamenti |
+| M4 | Ordini e Logistica | Trasformazione ordine, cambio stato, logistica contenitori/volumi, documento logistico |
+| M5 | Pagamenti e documenti | Gestione pagamenti, ricezione riferimenti DDT/fatture dal gestionale |
 | M6 | Dashboard e calendario | Vista eventi Gantt aggiornata, KPI corretti, solleciti |
-| M7 | Integrazione gestionale | Sync fatture, movimenti e anagrafiche con gestionale esterno |
+| M7 | Integrazione gestionale | Sync stati ordine, ricezione giacenze e documenti, adapter pattern |
 | M8 | Go-live | Deploy su VPS, test utente, documentazione |
 
 ---
@@ -1811,7 +1786,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 - Le API del gestionale, quando definite, determineranno l'implementazione esatta del modulo di integrazione
 - Il design UI/UX è stato validato tramite prototipo HTML interattivo (vedi sezione 15)
 - L'architettura multi-tenant-ready permette di ospitare più società dello stesso gruppo su una singola istanza
-- I PDF (preventivi, ordini, DDT) seguiranno il template grafico del brand aziendale
+- I PDF (preventivi, ordini) seguiranno il template grafico del brand aziendale. I documenti contabili (DDT, fatture) sono generati dal gestionale esterno con il suo template.
 
 ---
 
@@ -1826,7 +1801,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | `oltre-il-giardino-gestione-noleggi.html` | Copia di backup della SPA (stessa struttura di app.html) |
 | `assets/images/` | 44 immagini prodotto/categoria/hero/logo scaricate da oltreilgiardino.biz |
 
-**Parametri URL supportati:** `app.html?page=dashboard` | `catalogo` | `dettaglio-prodotto` | `calendario` | `preventivi` | `ordini` | `ddt` | `clienti`
+**Parametri URL supportati:** `app.html?page=dashboard` | `catalogo` | `dettaglio-prodotto` | `calendario` | `preventivi` | `ordini` | `logistica` | `clienti`
 
 ### 15.2 Stack Prototipo
 
@@ -1834,7 +1809,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 |---|---|
 | Rendering | HTML + CSS + JavaScript vanilla (nessuna dipendenza esterna) |
 | Layout | CSS Grid + Flexbox |
-| Icone | SVG inline nella sidebar (8 vettoriali: dashboard, catalogo, calendario, preventivi, ordini, DDT, clienti) |
+| Icone | SVG inline nella sidebar (8 vettoriali: dashboard, catalogo, calendario, preventivi, ordini, logistica, clienti) |
 | Navigazione | SPA con `showPage(id)` e classi `.page.active` — mappa nav index nel JS per evidenziare la voce sidebar corretta |
 | Gantt | Engine JavaScript puro: costruzione dinamica DOM, drag-to-pan, scroll-by, scroll-to-commit, sparkline |
 | Design system | CSS custom properties (`:root` tokens) con palette OKLch |
@@ -1853,7 +1828,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | `--fg-soft` | `color-mix(in oklch, var(--fg) 5%, transparent)` | Hover righe tabella, sfondo header Gantt |
 | `--success` | `oklch(55% 0.15 145)` | Stato confermato / disponibile / in allestimento |
 | `--warn` | `oklch(65% 0.15 80)` | Stato in corso / attenzione |
-| `--danger` | `oklch(55% 0.18 25)` | Stato critico / esaurito / uscita DDT |
+| `--danger` | `oklch(55% 0.18 25)` | Stato critico / esaurito |
 
 **Font stack:**
 - Display: `'Iowan Old Style', 'Charter', Georgia, serif` — usato in topbar title, titoli card, sidebar brand
@@ -1886,7 +1861,7 @@ Il database e l'architettura sono progettati per raccogliere i dati necessari (s
 | 4 | Calendario Eventi (Gantt) | `page-calendario` | Principale → Calendario Eventi | `oltre-il-giardino-gestione-noleggi.html:1010-1100` |
 | 5 | Preventivi | `page-preventivi` | Operativo → Preventivi | `:931-950` |
 | 6 | Ordini | `page-ordini` | Operativo → Ordini | `:953-971` |
-| 7 | DDT / Movimenti | `page-ddt` | Operativo → DDT / Movimenti | `:1038-1055` |
+| 7 | Logistica | `page-logistica` | Operativo → Logistica | `:1038-1055` |
 | 8 | Clienti | `page-clienti` | Anagrafiche → Clienti | `:1058-1077` |
 
 ### 15.5 Dati Demo
@@ -1900,7 +1875,7 @@ Il prototipo contiene dati realistici estratti da oltreilgiardino.biz:
 | Clienti | 7 | Rossi Srl, Bianchi Spa, Verdi & Figli, Neri Spa, Blu Events, Gialli Party, Arancio Catering |
 | Ordini | 6 | #2026/040 — #2026/047 con stati diversi |
 | Preventivi | 7 | #2026/026 — #2026/032 con 5 stati diversi |
-| DDT | 5 | #2026/085 — #2026/089, uscita e ingresso |
+| Documenti riferimento | 5 | DDT-2026-085 — DDT-2026-089 (dal gestionale) |
 | Impegni Gantt | 6 | Su 22 giorni (15 Giu → 6 Lug), con 4 stati |
 | Immagini | 33 | 13 categorie + 15 prodotti + 2 hero + 1 logo + 2 grafiche |
 
@@ -1910,7 +1885,7 @@ Il prototipo contiene dati realistici estratti da oltreilgiardino.biz:
 - Navigazione SPA completa tra 8 pagine + modale dettaglio ordine
 - Gantt interattivo con drag-to-pan, scroll-by, scroll-to-commit, sparkline
 - Filtri ricerca e selezione stato su Catalogo e Calendario Eventi
-- Pill colore per stati (ordini, preventivi, DDT, prodotti)
+- Pill colore per stati (ordini, preventivi, logistica, prodotti)
 - Timeline stato ordine a 6 step
 - Responsive base (sidebar collapse a 920px)
 - Foto allestimento con griglia thumbnail e zoom overlay con navigazione ◀/▶
@@ -1928,9 +1903,10 @@ Il prototipo contiene dati realistici estratti da oltreilgiardino.biz:
 | Dettaglio Cliente | Fase 1 | Vista anagrafica con storico ordini e preventivi |
 | Form creazione Cliente | Fase 1 | Inserimento anagrafica |
 | Form modifica Prodotto | Fase 1 | Modifica info, prezzi, quantità |
-| Wizard DDT (Uscita/Ingresso) | Fase 3 | Creazione movimento con selezione righe ordine e quantità |
-| Dettaglio DDT | Fase 3 | Vista completa DDT con righe e stato |
-| Conferma DDT | Fase 3 | Cambio stato articoli (Disponibile → In carico → In noleggio → Reso) |
+| Logistica movimenti (carico/scarico) | Fase 3 | Tracciamento contenitori casse/pallet/carrelli per ordine |
+| Documento logistico | Fase 2 | Form ZTL, Area C, muletti, personale — PDF esportabile |
+| Ricezione documenti da gestionale | Fase 2 | Webhook/API per ricevere DDT, fatture, note credito dal gestionale esterno |
+| Cambio stato articoli | Fase 3 | Disponibile → In carico → In noleggio → Reso/Danneggiato |
 | Paginazione tabella | Fase 1 | Componente paginazione client-side/server-side |
 | Export CSV/PDF | Fase 4 | Download dati da tabella |
 | Sidebar mobile | Fase 6 | Toggle hamburger per schermi <920px |
@@ -1949,4 +1925,23 @@ Nell'index il footer è in fondo alla pagina dopo la griglia di card. Nell'app �
 
 ---
 
-*Documento generato il 24/06/2026 — Specifica Tecnica v2.0 — Prototipo Gestione Noleggi Oltre Il Giardino SRL*
+*Documento generato il 24/06/2026 — Specifica Tecnica v2.1 — Prototipo Gestione Noleggi Oltre Il Giardino SRL*
+
+## Changelog v2.0 → v2.1
+
+| Sezione | Modifica |
+|---|---|
+| §1.1 | Architettura documentale riscritta: questo sistema **non genera** documenti contabili |
+| §1.3 | Glossario aggiornato: DDT/fatture non più "generati da questo sistema" |
+| §2.2 | Stack: rimosso PDF generation per DDT/fatture |
+| §2.4 | Flusso integrazione riscritto: questo sistema → stati ordine → gestionale → DDT/fatture/giacenze |
+| §3.1 | ER diagramma: rimosse entità `ddt`, `ddt_riga`, `fattura`, `fattura_riga` → sostituite con `documento_riferimento` (riferimenti a documenti del gestionale) + `logistica_movimento` (tracciamento interno non fiscale) |
+| §3.2.10–11a | Sezioni riscritte con `documento_riferimento` e `logistica_movimento` |
+| §4.2.6 | API rimosse per DDT → API per Logistica (contenitori, movimenti interni) + ricezione documenti |
+| §5.1 | Flusso riscritto: non più "DDT di uscita/ingresso" ma stati ordine comunicati al gestionale |
+| §8.3.7 | Timeline ordine semplificata (5 step, senza DDT). Rimosso "Crea DDT Uscita" |
+| §8.3.8 | `page-ddt` → `page-logistica` con nuovo contenuto |
+| §11.1 | "Generazione DDT/Fattura" non è di competenza di questo sistema |
+| §12 | Fasi e milestone aggiornate rimuovendo generazione documenti contabili |
+| §15.4 | Mappa schermate: `page-ddt` → `page-logistica` |
+| Varie | Oltre 30 riferimenti a DDT/fattura aggiornati in tutto il documento |
