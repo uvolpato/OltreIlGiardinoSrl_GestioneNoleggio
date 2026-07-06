@@ -1338,6 +1338,12 @@
     }
     .rows-cat-item .item-info { flex: 1; min-width: 0; }
     .rows-cat-item .item-name { font-weight: 500; }
+    .rows-cat-item .btn-detail-icon {
+      background: none; border: none; cursor: pointer; padding: 0; margin-left: 6px;
+      font-size: 13px; opacity: 0.4; vertical-align: middle; line-height: 1;
+      transition: opacity 0.12s;
+    }
+    .rows-cat-item .btn-detail-icon:hover { opacity: 1; }
     .rows-cat-item .item-meta { font-size: 11px; color: var(--muted); }
     .rows-cat-item .item-avail {
       display: flex; gap: 6px; font-family: var(--font-mono); font-size: 11px; white-space: nowrap;
@@ -1393,6 +1399,40 @@
       display: flex; justify-content: flex-end;
     }
 
+    /* ── product detail modal (from rows) ── */
+    .pd-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 260;
+      background: color-mix(in oklch, var(--fg) 40%, transparent);
+      backdrop-filter: blur(4px); justify-content: center; align-items: center;
+      padding: 2vh;
+    }
+    .pd-modal-overlay.open { display: flex; }
+    .pd-modal-content {
+      background: var(--surface); border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px oklch(0% 0 0 / 0.25);
+      width: min(1100px, 96vw); max-height: 92vh; display: flex; flex-direction: column;
+    }
+    .pd-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .pd-modal-header h3 { font-family: var(--font-display); font-size: 17px; margin: 0; }
+    .pd-modal-close {
+      width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted); font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .pd-modal-close:hover { background: var(--fg-soft); color: var(--fg); }
+    .pd-modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+    .pd-modal-footer {
+      padding: 12px 20px; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0;
+    }
+    .pd-modal .pd-hero { display: flex; gap: 20px; margin-bottom: 16px; align-items: flex-start; }
+    .pd-modal .pd-hero-img { width: 200px; min-width: 200px; }
+    .pd-modal .pd-hero-info { flex: 1; }
+    .pd-modal .price-cards { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+
     /* ─── responsive ────────────────────────────────────────────── */
     @media (max-width: 920px) {
       .sidebar { display: none; }
@@ -1414,6 +1454,10 @@
       .log-vincoli-grid { grid-template-columns: 1fr; }
       .pd-anagrafica-grid { grid-template-columns: 1fr; }
       .doc-log-grid { grid-template-columns: 1fr; }
+      .pd-modal .pd-hero { flex-direction: column; }
+      .pd-modal .pd-hero-img { width: 100%; min-width: 0; }
+      .pd-modal-content { width: 98vw; max-height: 96vh; }
+      .pd-modal .pd-tabs { flex-wrap: wrap; }
     }
 
     /* ─── hidden sections ───────────────────────────────────────── */
@@ -2919,6 +2963,70 @@
     </div>
   </div>
 
+  <!-- Product Detail Modal (from rows catalog) -->
+  <div id="pd-modal" class="pd-modal-overlay" onclick="closePdFromRows(event)">
+    <div class="pd-modal-content" onclick="event.stopPropagation()">
+      <div class="pd-modal-header">
+        <h3 id="pd-modal-title">Dettaglio Prodotto</h3>
+        <button class="pd-modal-close" onclick="closePdFromRows({target:this,currentTarget:this.closest('.pd-modal-overlay')})">✕</button>
+      </div>
+      <div class="pd-modal-body">
+        <div class="pd-hero" id="pd-modal-hero">
+          <div class="pd-hero-img" id="pd-modal-hero-img" onclick="pdZoomOpen(0)">
+            <img src="" alt="" id="pd-modal-main-img" />
+            <span class="zoom-hint">🔍 Ingrandisci</span>
+          </div>
+          <div class="pd-hero-info" id="pd-modal-hero-info"></div>
+        </div>
+        <div class="pd-tabs" id="pd-modal-tabs">
+          <button class="pd-tab active" onclick="switchPdModalTab('tech')">Scheda Tecnica</button>
+          <button class="pd-tab" onclick="switchPdModalTab('price')">Listino</button>
+          <button class="pd-tab" onclick="switchPdModalTab('gallery')">Galleria</button>
+          <button class="pd-tab" onclick="switchPdModalTab('gantt')">Disponibilità</button>
+          <button class="pd-tab" onclick="switchPdModalTab('anagrafica')">Anagrafica</button>
+          <button class="pd-tab" onclick="switchPdModalTab('movimenti')">Movimenti</button>
+        </div>
+        <div class="pd-tab-panel active" id="pd-modal-tab-tech"><div class="spec-grid" id="pd-modal-tech-grid"></div></div>
+        <div class="pd-tab-panel" id="pd-modal-tab-price"><div class="price-cards" id="pd-modal-price-grid"></div></div>
+        <div class="pd-tab-panel" id="pd-modal-tab-gallery"><div class="pd-gallery-grid" id="pd-modal-gallery-grid"></div></div>
+        <div class="pd-tab-panel" id="pd-modal-tab-gantt">
+          <div class="gantt-wrap">
+            <div class="gantt-toolbar">
+              <div class="gantt-title">Disponibilità e Impegni</div>
+              <div class="gantt-nav">
+                <button class="btn btn-ghost btn-sm" onclick="pdGanttScrollBy(-14)">◀ 2 sett</button>
+                <button class="btn btn-ghost btn-sm" onclick="pdGanttToday()">Oggi</button>
+                <span id="pd-gantt-range-label">15 Giu — 5 Lug 2026</span>
+                <button class="btn btn-ghost btn-sm" onclick="pdGanttScrollBy(14)">2 sett ▶</button>
+              </div>
+            </div>
+            <div class="gantt-viewport" id="pd-gantt-viewport">
+              <div class="gantt" id="pd-gantt-grid" style="--day-w:42px;">
+                <div class="gantt-label-col" id="pd-gantt-labels"></div>
+                <div class="gantt-timeline" id="pd-gantt-timeline"></div>
+              </div>
+            </div>
+          </div>
+          <div class="gantt-legend">
+            <div class="gantt-legend-card" id="pd-gantt-legend"></div>
+            <div class="gantt-legend-card gantt-legend-summary" id="pd-gantt-summary"></div>
+          </div>
+        </div>
+        <div class="pd-tab-panel" id="pd-modal-tab-anagrafica"><div class="pd-anagrafica-grid" id="pd-modal-anag-grid"></div></div>
+        <div class="pd-tab-panel" id="pd-modal-tab-movimenti">
+          <table class="pd-movimenti-table">
+            <thead><tr><th>Data</th><th>Tipo</th><th>Evento</th><th>Ordine</th><th class="num">Qtà</th><th class="num">Saldo</th></tr></thead>
+            <tbody id="pd-modal-movimenti-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pd-modal-footer">
+        <button class="btn btn-secondary" onclick="closePdFromRows({target:this,currentTarget:this.closest('.pd-modal-overlay')})">Chiudi</button>
+        <button class="btn btn-primary" id="pd-modal-add-btn" onclick="pdModalAddToQuote()">+ Aggiungi al preventivo</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     function showPage(id) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -3318,10 +3426,16 @@
 
     document.addEventListener('keydown', function(e) {
       var overlay = document.getElementById('zoom-overlay');
-      if (!overlay || !overlay.classList.contains('open')) return;
-      if (e.key === 'Escape') { overlay.classList.remove('open'); document.body.style.overflow = ''; }
-      if (e.key === 'ArrowLeft') zoomNav(-1, e);
-      if (e.key === 'ArrowRight') zoomNav(1, e);
+      if (overlay && overlay.classList.contains('open')) {
+        if (e.key === 'Escape') { overlay.classList.remove('open'); document.body.style.overflow = ''; }
+        if (e.key === 'ArrowLeft') zoomNav(-1, e);
+        if (e.key === 'ArrowRight') zoomNav(1, e);
+        return;
+      }
+      var pdModal = document.getElementById('pd-modal');
+      if (pdModal && pdModal.classList.contains('open') && e.key === 'Escape') {
+        pdModal.classList.remove('open');
+      }
     });
 
     /* ── SHARED UTILS ── */
@@ -4095,7 +4209,7 @@
         }
         html += '<div class="rows-cat-item">';
         html += '<img src="' + item.img + '" alt="" onerror="this.style.display=\'none\'" />';
-        html += '<div class="item-info"><div class="item-name">' + item.name + '</div>';
+        html += '<div class="item-info"><div class="item-name">' + item.name + ' <button class="btn-detail-icon" onclick="event.stopPropagation();openPdFromRows(' + ci + ')" title="Vedi scheda dettaglio">🔍</button></div>';
         html += '<div class="item-meta">' + item.code + ' · ' + item.cat + '</div>';
         html += '<div class="item-avail-detail">';
         html += '<div class="avail-row">';
@@ -4513,7 +4627,302 @@
         });
       }
       tbody.innerHTML = rowsHtml;
+    }    /* ── Product Detail Modal (from rows catalog) ── */
+    var pdCatalogIdx = -1;
+    var pdGalleryImgs = [];
+    var pdZoomIdx = 0;
+
+    function pdGetGallery(item) {
+      return [
+        { src: item.img, alt: 'Vista principale' },
+        { src: item.img, alt: 'Dettaglio' },
+        { src: item.img, alt: 'Prospettiva' },
+        { src: item.img, alt: 'Montaggio' },
+        { src: item.img, alt: 'Uso evento' },
+        { src: item.img, alt: 'Dettaglio materiali' }
+      ];
     }
+
+    function openPdFromRows(catalogIdx) {
+      pdCatalogIdx = catalogIdx;
+      var item = QUOTE_CATALOG[catalogIdx];
+      var dateRange = quoteGetEventDateRange();
+      var av = quoteCalcAvailability(item, dateRange);
+
+      document.getElementById('pd-modal-title').textContent = item.name;
+      document.getElementById('pd-modal-main-img').src = item.img;
+      document.getElementById('pd-modal-main-img').alt = item.name;
+
+      // hero info
+      var infoHtml = '<div class="pd-hero-title">' + item.name + ' <span style="font-size:13px;color:var(--muted);font-weight:400;">' + item.code + '</span></div>';
+      infoHtml += '<div class="pd-hero-meta" style="margin-top:6px;"><span>' + item.cat + '</span><span>' + item.qty + ' pz totali</span></div>';
+      var inNoleggio = 0;
+      item.commits.forEach(function(c) { if (c.status !== 'rientro' && c.status !== 'bozza') inNoleggio += c.qty; });
+      var disponibili = Math.max(0, item.qty - inNoleggio);
+      var danneggiati = Math.max(0, Math.round(item.qty * 0.04));
+      infoHtml += '<div class="grid-3" style="text-align:center;max-width:360px;margin-top:10px;">';
+      infoHtml += '<div class="stat-mini"><div class="val" style="color:var(--success);font-size:22px;">' + disponibili + '</div><div class="lbl">Disponibili</div></div>';
+      infoHtml += '<div class="stat-mini"><div class="val" style="color:var(--warn);font-size:22px;">' + inNoleggio + '</div><div class="lbl">In noleggio</div></div>';
+      infoHtml += '<div class="stat-mini"><div class="val" style="color:var(--danger);font-size:22px;">' + danneggiati + '</div><div class="lbl">Danneggiati</div></div>';
+      infoHtml += '</div>';
+      document.getElementById('pd-modal-hero-info').innerHTML = infoHtml;
+
+      // tech specs
+      var techHtml = '';
+      var specs = [
+        ['Codice articolo', item.code],
+        ['Categoria', item.cat],
+        ['Quantità totale', item.qty + ' pz'],
+        ['Unità di misura', 'Pezzi'],
+        ['Dimensioni', '50×50×h90 cm'],
+        ['Peso', '3,2 kg'],
+        ['Materiale', 'Legno / metallo'],
+        ['Colore', 'Naturale / Bianco'],
+        ['Pileabile', 'Sì (max 6)'],
+        ['Imballo', 'Cartone standard']
+      ];
+      specs.forEach(function(s) {
+        techHtml += '<div class="spec-cell"><span class="spec-label">' + s[0] + '</span><span class="spec-val">' + s[1] + '</span></div>';
+      });
+      document.getElementById('pd-modal-tech-grid').innerHTML = techHtml;
+
+      // prices
+      var priceHtml = '';
+      var pt = item.prices;
+      var priceLabels = { giorno: 'Per giorno', '3gg': '3 giorni', settimana: 'Settimana', forfait: 'Forfettario' };
+      var priceUnits = { giorno: '/pz/giorno', '3gg': '/pz', settimana: '/pz', forfait: '/pz' };
+      ['giorno', '3gg', 'settimana', 'forfait'].forEach(function(k) {
+        priceHtml += '<div class="price-card"><div class="price-type">' + priceLabels[k] + '</div><div class="price-val">€ ' + pt[k].toFixed(2).replace('.',',') + '</div><div class="price-unit">' + priceUnits[k] + '</div></div>';
+      });
+      document.getElementById('pd-modal-price-grid').innerHTML = priceHtml;
+
+      // gallery
+      pdGalleryImgs = pdGetGallery(item);
+      var galHtml = '';
+      pdGalleryImgs.forEach(function(g, i) {
+        galHtml += '<div class="pd-gallery-thumb' + (i === 0 ? ' active' : '') + '" onclick="pdZoomOpen(' + i + ')"><img src="' + g.src + '" alt="' + g.alt + '" onerror="this.closest(\'.pd-gallery-thumb\').style.display=\'none\'" /></div>';
+      });
+      document.getElementById('pd-modal-gallery-grid').innerHTML = galHtml;
+
+      // gantt — build
+      pdBuildGantt(item, dateRange);
+
+      // anagrafica
+      var anagHtml = '';
+      var anags = [
+        ['Fornitore', '— · —'],
+        ['Contatto fornitore', '—'],
+        ['Data acquisto', '—'],
+        ['Costo acquisto', '—'],
+        ['Posizione magazzino', 'Magazzino generale'],
+        ['Acquisto iniziale', item.qty + ' pz'],
+        ['Ultimo acquisto', '—'],
+        ['Note logistica', 'Standard'],
+        ['Note interne', '—']
+      ];
+      anags.forEach(function(a) {
+        anagHtml += '<div class="pd-anagrafica-cell"><span class="pd-label">' + a[0] + '</span><span class="pd-val">' + a[1] + '</span></div>';
+      });
+      document.getElementById('pd-modal-anag-grid').innerHTML = anagHtml;
+
+      // movimenti
+      pdBuildMovimenti(item);
+
+      // reset tabs to first
+      document.querySelectorAll('#pd-modal .pd-tab').forEach(function(t, i) {
+        t.classList.toggle('active', i === 0);
+      });
+      document.querySelectorAll('#pd-modal .pd-tab-panel').forEach(function(p, i) {
+        p.classList.toggle('active', i === 0);
+      });
+
+      // add button state
+      var existing = quoteSelectedItems.find(function(s) { return s.catalogIdx === catalogIdx; });
+      var btn = document.getElementById('pd-modal-add-btn');
+      btn.textContent = existing ? '✓ Già aggiunto' : '+ Aggiungi al preventivo';
+      btn.style.opacity = existing ? '0.6' : '1';
+
+      document.getElementById('pd-modal').classList.add('open');
+    }
+
+    function closePdFromRows(e) {
+      if (e.target === e.currentTarget || e.target.classList.contains('pd-modal-close')) {
+        document.getElementById('pd-modal').classList.remove('open');
+        document.getElementById('pd-modal-gallery-grid').innerHTML = '';
+      }
+    }
+
+    function switchPdModalTab(tab) {
+      var tabs = { tech: 0, price: 1, gallery: 2, gantt: 3, anagrafica: 4, movimenti: 5 };
+      document.querySelectorAll('#pd-modal .pd-tab').forEach(function(t, i) {
+        t.classList.toggle('active', i === tabs[tab]);
+      });
+      document.querySelectorAll('#pd-modal .pd-tab-panel').forEach(function(p, i) {
+        p.classList.toggle('active', i === tabs[tab]);
+      });
+      if (tab === 'gantt' && pdCatalogIdx >= 0) {
+        pdBuildGantt(QUOTE_CATALOG[pdCatalogIdx], quoteGetEventDateRange());
+      }
+    }
+
+    function pdModalAddToQuote() {
+      if (pdCatalogIdx < 0) return;
+      var existing = quoteSelectedItems.find(function(s) { return s.catalogIdx === pdCatalogIdx; });
+      if (existing) { closePdFromRows({ target: document.getElementById('pd-modal'), currentTarget: document.getElementById('pd-modal') }); return; }
+      var qty = 1;
+      var item = QUOTE_CATALOG[pdCatalogIdx];
+      quoteSelectedItems.push({
+        catalogIdx: pdCatalogIdx, qty: qty, priceType: 'giorno',
+        unitPrice: item.prices.giorno, discountPct: 0,
+        fixedDiscount: 0, priceManual: false, manualPrice: 0,
+        iva: 22, composito: null, note: ''
+      });
+      quoteRenderSelected();
+      quoteRecalcTotals();
+      rowsSearchCatalog();
+      if (document.getElementById('rows-modal').classList.contains('open')) {
+        // remain in rows modal
+        closePdFromRows({ target: document.getElementById('pd-modal'), currentTarget: document.getElementById('pd-modal') });
+      }
+    }
+
+    // ── PD Modal Gallery Zoom ──
+    function pdZoomOpen(idx) {
+      pdZoomIdx = idx;
+      // use existing zoom-overlay
+      var overlay = document.getElementById('zoom-overlay');
+      if (!overlay) return;
+      var img = document.getElementById('zoom-img');
+      var cap = document.getElementById('zoom-caption');
+      if (pdGalleryImgs[idx]) {
+        img.src = pdGalleryImgs[idx].src;
+        cap.textContent = (idx + 1) + ' / ' + pdGalleryImgs.length + ' — ' + pdGalleryImgs[idx].alt;
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    // ── PD Modal Gantt ──
+    var pdGanttStart = new Date(2026, 5, 15);
+    var pdGanttEnd = new Date(2026, 6, 6);
+
+    function pdBuildGantt(item, dateRange) {
+      var vp = document.getElementById('pd-gantt-viewport');
+      var tl = document.getElementById('pd-gantt-timeline');
+      var lbl = document.getElementById('pd-gantt-labels');
+      if (!tl || !lbl) return;
+
+      var start = new Date(pdGanttStart);
+      var end = new Date(pdGanttEnd);
+      var days = [];
+      for (var d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        days.push(new Date(d));
+      }
+      // range label
+      document.getElementById('pd-gantt-range-label').textContent =
+        days[0].getDate() + ' ' + MONTH_IT[days[0].getMonth()] + ' — ' +
+        days[days.length - 1].getDate() + ' ' + MONTH_IT[days[days.length - 1].getMonth()] + ' 2026';
+
+      // timeline header
+      var tlHtml = '';
+      days.forEach(function(day) {
+        var isWeekend = day.getDay() === 0 || day.getDay() === 6;
+        var isToday = day.getDate() === TODAY.getDate() && day.getMonth() === TODAY.getMonth();
+        tlHtml += '<div class="gt-day' + (isWeekend ? ' gt-weekend' : '') + (isToday ? ' gt-today' : '') + '"><span class="gt-dow">' + DOW_IT[day.getDay()] + '</span><span class="gt-num">' + day.getDate() + '</span></div>';
+      });
+      tl.innerHTML = tlHtml;
+
+      // labels + bars
+      var lblHtml = '<div class="gantt-label-head">Articolo / Impegno</div>';
+      var barHtml = '';
+      item.commits.forEach(function(c, i) {
+        var cs = new Date(c.start);
+        var ce = new Date(c.end);
+        var leftDay = Math.round((cs - start) / DAY_MS);
+        var dur = Math.round((ce - cs) / DAY_MS) + 1;
+        var colorMap = { 'confirmed': 'oklch(55% 0.15 250)', 'allestimento': 'var(--success)', 'in-corso': 'var(--warn)', 'bozza': 'var(--muted)', 'rientro': 'oklch(55% 0.10 300)' };
+        var col = colorMap[c.status] || 'var(--muted)';
+        lblHtml += '<div class="gantt-label-row" onclick="pdGanttScrollToDay(' + leftDay + ')" data-idx="' + i + '"><span class="gantt-label-name">' + c.client + '</span><span class="gantt-label-qty">' + c.qty + ' pz</span></div>';
+        barHtml += '<div class="gt-bar" style="left:' + (leftDay * 42) + 'px;width:' + (dur * 42 - 4) + 'px;background:' + col + ';" title="' + c.order + ' — ' + c.client + ' (' + c.event + ')"></div>';
+      });
+
+      // oggi marker
+      var todayOffset = Math.round((TODAY - start) / DAY_MS);
+      if (todayOffset >= 0 && todayOffset < days.length) {
+        barHtml += '<div class="gt-today-marker" style="left:' + (todayOffset * 42) + 'px;"><span class="gt-today-label">OGGI</span></div>';
+      }
+
+      lbl.innerHTML = lblHtml;
+
+      // replace bars container
+      var existingBars = vp.querySelector('.gt-bars');
+      if (!existingBars) {
+        var barsDiv = document.createElement('div');
+        barsDiv.className = 'gt-bars';
+        barsDiv.style.position = 'absolute'; barsDiv.style.top = '30px';
+        barsDiv.style.left = '0'; barsDiv.style.right = '0'; barsDiv.style.bottom = '0';
+        barsDiv.style.pointerEvents = 'none';
+        barsDiv.innerHTML = barHtml;
+        vp.querySelector('.gantt').appendChild(barsDiv);
+      } else {
+        existingBars.innerHTML = barHtml;
+      }
+
+      // legend
+      var legHtml = '<h4>Impegni Articolo</h4>';
+      item.commits.forEach(function(c, i) {
+        var cs = new Date(c.start), ce = new Date(c.end);
+        var colorMap = { 'confirmed': 'oklch(55% 0.15 250)', 'allestimento': 'var(--success)', 'in-corso': 'var(--warn)', 'bozza': 'var(--muted)', 'rientro': 'oklch(55% 0.10 300)' };
+        legHtml += '<div class="gantt-commit-row" onclick="pdGanttScrollToDay(' + Math.round((cs - start) / DAY_MS) + ')"><span class="commit-dot" style="background:' + (colorMap[c.status] || 'var(--muted)') + ';"></span><div class="commit-info"><div class="commit-client">' + c.client + ' — ' + c.order + '</div><div class="commit-period">' + cs.getDate() + '/' + (cs.getMonth()+1) + ' – ' + ce.getDate() + '/' + (ce.getMonth()+1) + ' · ' + c.event + '</div></div><span class="commit-qty">' + c.qty + ' pz</span></div>';
+      });
+      document.getElementById('pd-gantt-legend').innerHTML = legHtml;
+
+      // summary
+      var summaryHtml = '<h4>Riepilogo Disponibilità</h4>';
+      summaryHtml += '<div class="summary-row"><span class="summary-label">Totale magazzino</span><span class="summary-val">' + item.qty + ' pz</span></div>';
+      var totCommitted = item.commits.reduce(function(a, c) { return a + c.qty; }, 0);
+      summaryHtml += '<div class="summary-row"><span class="summary-label">Impegnati (prossimi 21gg)</span><span class="summary-val" style="color:' + (totCommitted > item.qty * 0.7 ? 'var(--danger)' : 'var(--warn)') + ';">' + totCommitted + ' pz</span></div>';
+      summaryHtml += '<div class="summary-row"><span class="summary-label">Media disponibilità giornaliera</span><span class="summary-val" style="color:var(--success);">' + Math.max(0, item.qty - totCommitted) + ' pz</span></div>';
+      document.getElementById('pd-gantt-summary').innerHTML = summaryHtml;
+
+      // scroll to today
+      setTimeout(function() {
+        if (todayOffset >= 0 && vp) vp.scrollLeft = Math.max(0, (todayOffset - 2) * 42);
+      }, 50);
+    }
+
+    function pdGanttScrollBy(days) {
+      var vp = document.getElementById('pd-gantt-viewport');
+      if (vp) vp.scrollLeft += days * 42;
+    }
+
+    function pdGanttToday() {
+      var vp = document.getElementById('pd-gantt-viewport');
+      if (!vp) return;
+      var offset = Math.round((TODAY - pdGanttStart) / DAY_MS);
+      vp.scrollLeft = Math.min(Math.max(0, (offset - 2) * 42), vp.scrollWidth - vp.clientWidth);
+    }
+
+    function pdGanttScrollToDay(dayIdx) {
+      var vp = document.getElementById('pd-gantt-viewport');
+      if (vp) vp.scrollLeft = Math.max(0, (dayIdx - 1) * 42);
+    }
+
+    function pdBuildMovimenti(item) {
+      var tbody = document.getElementById('pd-modal-movimenti-tbody');
+      var html = '';
+      var saldo = item.qty;
+      html += '<tr><td>—</td><td><span class="pill pill-green">Acquisto iniziale</span></td><td>—</td><td>—</td><td class="num">+' + item.qty + '</td><td class="num saldo pos">' + saldo + '</td></tr>';
+      item.commits.forEach(function(c) {
+        saldo -= c.qty;
+        var tipo = c.status === 'rientro' ? 'pill-green' : 'pill-red';
+        var label = c.status === 'rientro' ? 'Rientro' : 'Noleggio';
+        html += '<tr><td>' + c.start + '</td><td><span class="pill ' + tipo + '">' + label + '</span></td><td>' + c.event + '</td><td class="num">' + c.order + '</td><td class="num">-' + c.qty + '</td><td class="num saldo ' + (saldo >= 0 ? 'pos' : 'neg') + '">' + saldo + '</td></tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    // ── End PD Modal ──
 
     // Init: read ?page= param or default to dashboard
     (function() {
