@@ -351,7 +351,15 @@
       border-bottom: 1px solid var(--border); min-height: 48px;
     }
     .cal-gantt-row:last-child { border-bottom: none; }
-    .cal-gantt-row:hover { background: var(--fg-soft); }
+    .cal-gantt-row:hover { background: transparent; }
+    .cal-gantt-row .gantt-cell {
+      width: 42px; min-width: 42px; border-right: 1px solid var(--border);
+    }
+    .cal-gantt-row .gantt-cell.weekend { background: color-mix(in oklch, var(--fg) 3%, transparent); }
+    .cal-gantt-row .gantt-cell.today-col { background: var(--accent-soft); }
+    .cal-gantt-row:hover .gantt-cell { background: var(--fg-soft); }
+    .cal-gantt-row:hover .gantt-cell.weekend { background: color-mix(in oklch, var(--fg) 8%, transparent); }
+    .cal-gantt-row:hover .gantt-cell.today-col { background: var(--accent-soft); }
     .cal-gantt-bar {
       position: absolute; top: 8px; height: 32px;
       border-radius: 6px; display: flex; align-items: center; justify-content: center;
@@ -721,12 +729,20 @@
 
     .gantt-body { position: relative; }
     .gantt-row {
-      height: 44px; display: flex; align-items: center;
+      height: 44px; display: flex; align-items: stretch;
       border-bottom: 1px solid var(--border);
       position: relative;
     }
     .gantt-row:last-child { border-bottom: none; }
-    .gantt-row:hover { background: var(--fg-soft); }
+    .gantt-row:hover { background: transparent; }
+    .gantt-row .gantt-cell {
+      width: 42px; min-width: 42px; border-right: 1px solid var(--border);
+    }
+    .gantt-row .gantt-cell.weekend { background: color-mix(in oklch, var(--fg) 3%, transparent); }
+    .gantt-row .gantt-cell.today-col { background: var(--accent-soft); }
+    .gantt-row:hover .gantt-cell { background: var(--fg-soft); }
+    .gantt-row:hover .gantt-cell.weekend { background: color-mix(in oklch, var(--fg) 8%, transparent); }
+    .gantt-row:hover .gantt-cell.today-col { background: var(--accent-soft); }
 
     .gantt-bar {
       position: absolute; height: 26px; top: 9px;
@@ -858,8 +874,9 @@
     .dash-gantt-header .gantt-days { display: flex; }
     .dash-gantt-day {
       width: 42px; min-width: 42px; padding: 6px 2px; text-align: center;
-      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
     }
+    .dash-gantt-day:last-child { border-right: none; }
     .dash-gantt-day .day-num { font-weight: 600; font-size: 12px; line-height: 1; }
     .dash-gantt-day .day-dow { font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; margin-top: 2px; color: var(--muted); }
     .dash-gantt-day.weekend { background: color-mix(in oklch, var(--fg) 3%, transparent); }
@@ -870,8 +887,16 @@
       display: flex; border-bottom: 1px solid var(--border); height: 40px;
     }
     .dash-gantt-row:last-child { border-bottom: none; }
-    .dash-gantt-row:hover { background: var(--fg-soft); }
-    .dash-gantt-row .gantt-bars { position: relative; flex: 1; }
+    .dash-gantt-row:hover { background: transparent; }
+    .dash-gantt-row .gantt-bars { position: relative; flex: 1; display: flex; }
+    .dash-gantt-row .gantt-cell {
+      width: 42px; min-width: 42px; border-right: 1px solid var(--border);
+    }
+    .dash-gantt-row .gantt-cell.weekend { background: color-mix(in oklch, var(--fg) 3%, transparent); }
+    .dash-gantt-row .gantt-cell.today-col { background: var(--accent-soft); }
+    .dash-gantt-row:hover .gantt-cell { background: var(--fg-soft); }
+    .dash-gantt-row:hover .gantt-cell.weekend { background: color-mix(in oklch, var(--fg) 8%, transparent); }
+    .dash-gantt-row:hover .gantt-cell.today-col { background: var(--accent-soft); }
     .dash-gantt-bar {
       position: absolute; top: 6px; height: 26px; border-radius: 4px;
       display: flex; align-items: center; padding: 0 8px;
@@ -3298,7 +3323,19 @@
       headHtml += '</div>';
       var bodyHtml = '<div class="gantt-body">';
       COMMITMENTS.forEach(function(c, ci) {
-        bodyHtml += '<div class="gantt-row" data-commit="' + ci + '">';
+        bodyHtml += '<div class="gantt-row" data-commit="' + ci + '" style="display:flex;">';
+        bodyHtml += '<div class="gantt-bars" style="position:relative;flex:1;display:flex;">';
+
+        /* ── Day grid cells ── */
+        DAYS.forEach(function(day, j) {
+          var isWeekend = day.getDay() === 0 || day.getDay() === 6;
+          var isToday = day.toDateString() === TODAY.toDateString();
+          var cellCls = 'gantt-cell';
+          if (isWeekend) cellCls += ' weekend';
+          if (isToday) cellCls += ' today-col';
+          bodyHtml += '<div class="' + cellCls + '"></div>';
+        });
+
         bodyHtml += '<div class="gantt-avail-bar" style="left:0;right:0;"></div>';
         var cStart = new Date(c.start).getTime();
         var cEnd = new Date(c.end).getTime() + DAY_MS;
@@ -3308,7 +3345,7 @@
         var widthPx = durationDays * 42;
         var statusClass = c.status === 'allestimento' ? 'allestimento' : c.status === 'confirmed' ? 'confirmed' : c.status === 'in-corso' ? 'in-corso' : 'bozza';
         bodyHtml += '<div class="gantt-bar ' + statusClass + '" style="left:' + leftPx + 'px;width:' + widthPx + 'px;" title="' + c.client + ' — ' + c.qty + ' pz">' + c.qty + ' pz</div>';
-        bodyHtml += '</div>';
+        bodyHtml += '</div></div>';
       });
       bodyHtml += '</div>';
       tl.innerHTML = headHtml + bodyHtml;
@@ -3476,7 +3513,19 @@
 
       var bodyHtml = '<div class="cal-gantt-body">';
       filtered.forEach(function(e) {
-        bodyHtml += '<div class="cal-gantt-row">';
+        bodyHtml += '<div class="cal-gantt-row" style="display:flex;">';
+        bodyHtml += '<div class="gantt-bars" style="position:relative;flex:1;display:flex;">';
+
+        /* ── Day grid cells ── */
+        days.forEach(function(day, j) {
+          var isWeekend = day.getDay() === 0 || day.getDay() === 6;
+          var isToday = day.toDateString() === TODAY.toDateString();
+          var cellCls = 'gantt-cell';
+          if (isWeekend) cellCls += ' weekend';
+          if (isToday) cellCls += ' today-col';
+          bodyHtml += '<div class="' + cellCls + '"></div>';
+        });
+
         var cStart = new Date(e.start).getTime();
         var cEnd = new Date(e.end).getTime() + DAY_MS;
         var startOffset = (cStart - CAL_GANTT_START.getTime()) / DAY_MS;
@@ -3487,7 +3536,8 @@
         bodyHtml += '<div class="cal-gantt-bar" style="left:' + leftPx + 'px;width:' + widthPx + 'px;background:' + barColor + ';" title="' + e.id + ' — ' + e.client + ' (' + e.event + ')">';
         bodyHtml += e.id.replace('#', '') + ' · ' + e.client;
         bodyHtml += '</div>';
-        bodyHtml += '</div>';
+
+        bodyHtml += '</div></div>';
       });
       bodyHtml += '</div>';
 
@@ -3650,6 +3700,16 @@
       sorted.forEach(function(o, idx) {
         rowsHtml += '<div class="dash-gantt-row">';
         rowsHtml += '<div class="gantt-bars">';
+
+        /* ── Day grid cells ── */
+        days.forEach(function(day, j) {
+          var isWeekend = day.getDay() === 0 || day.getDay() === 6;
+          var isToday = day.toDateString() === TODAY.toDateString();
+          var cellCls = 'gantt-cell';
+          if (isWeekend) cellCls += ' weekend';
+          if (isToday) cellCls += ' today-col';
+          rowsHtml += '<div class="' + cellCls + '"></div>';
+        });
 
         var cStart = new Date(o.start).getTime();
         var cEnd = new Date(o.end).getTime() + DAY_MS;
